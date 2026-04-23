@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mafia — The Game of Deception</title>
+  <meta name="description" content="Create or join a Mafia game lobby. Assign roles and play with friends in real-time.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="bg-particles" id="particles"></div>
+
+  <main class="landing">
+    <div class="landing-content">
+      <div class="logo-section">
+        <div class="logo-icon">🎭</div>
+        <h1 class="logo-title">MAFIA</h1>
+        <p class="logo-subtitle">The Game of Deception</p>
+      </div>
+
+      <div class="action-cards">
+        <a href="#" class="action-card" id="createBtn">
+          <div class="card-icon">👑</div>
+          <h2>Create Lobby</h2>
+          <p>Start a new game as the storyteller. Share the QR code with your friends.</p>
+          <span class="card-arrow">→</span>
+        </a>
+
+        <a href="/join.html" class="action-card">
+          <div class="card-icon">🚪</div>
+          <h2>Join Lobby</h2>
+          <p>Enter a lobby code or scan a QR code to join an existing game.</p>
+          <span class="card-arrow">→</span>
+        </a>
+      </div>
+
+      <div class="roles-preview">
+        <h3>Roles in the Game</h3>
+        <div class="roles-list">
+          <div class="role-badge role-killer">
+            <span class="role-emoji">🔪</span>
+            <span>Killer</span>
+          </div>
+          <div class="role-badge role-doctor">
+            <span class="role-emoji">💉</span>
+            <span>Doctor</span>
+          </div>
+          <div class="role-badge role-villager">
+            <span class="role-emoji">🏘️</span>
+            <span>Villager</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="landing-footer">
+      <p>Play locally with friends • No account needed</p>
+    </footer>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/socket-client.js"></script>
+  <script>
+    document.getElementById('createBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      createLobby();
+    });
+  </script>
+</body>
+</html>

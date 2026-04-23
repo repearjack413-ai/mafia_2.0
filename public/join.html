@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Join Lobby — Mafia</title>
+    <meta name="description" content="Join a Mafia game lobby with a code or QR scan.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <main class="join-page">
+        <a href="/" class="back-link">← Back to Home</a>
+
+        <div class="join-card glass-card">
+            <div class="join-header">
+                <div class="logo-icon small">🚪</div>
+                <h1>Join Game</h1>
+                <p>Enter the lobby code and your name to join</p>
+            </div>
+
+            <form id="joinForm" class="join-form">
+                <div class="form-group">
+                    <label for="lobbyCode">Lobby Code</label>
+                    <input type="text" id="lobbyCode" placeholder="e.g. ABC123" maxlength="6" autocomplete="off"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label for="playerName">Your Name</label>
+                    <input type="text" id="playerName" placeholder="Enter your name" maxlength="20" autocomplete="off"
+                        required>
+                </div>
+                <div id="joinError" class="error-msg hidden"></div>
+                <button type="submit" class="btn btn-primary btn-full" id="joinBtn">
+                    <span>Join Lobby</span>
+                    <span class="btn-arrow">→</span>
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <!-- Waiting Room (shown after joining) -->
+    <main class="waiting-page hidden" id="waitingRoom">
+        <div class="waiting-card glass-card">
+            <div class="waiting-header">
+                <div class="logo-icon small">⏳</div>
+                <h1>Waiting Room</h1>
+                <p>The storyteller will assign roles soon...</p>
+            </div>
+
+            <div class="player-name-display">
+                You joined as: <strong id="myNameDisplay"></strong>
+            </div>
+
+            <div class="players-section">
+                <h3>Players in Lobby <span class="player-count" id="playerCount">0</span></h3>
+                <ul class="player-list" id="playerList"></ul>
+            </div>
+
+            <div class="waiting-animation">
+                <div class="pulse-ring"></div>
+                <div class="pulse-ring delay-1"></div>
+                <div class="pulse-ring delay-2"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Role Reveal (shown after roles assigned) -->
+    <main class="role-page hidden" id="rolePage">
+        <div class="role-reveal-card glass-card">
+            <div class="role-reveal-header">
+                <h1>Your Role</h1>
+                <p>Keep it secret. Keep it safe.</p>
+            </div>
+
+            <div class="role-card-flip" id="roleCardFlip">
+                <div class="role-card-inner">
+                    <div class="role-card-front">
+                        <div class="card-mystery">?</div>
+                        <p>Tap to reveal</p>
+                    </div>
+                    <div class="role-card-back" id="roleCardBack">
+                        <div class="role-emoji-large" id="roleEmoji">🔪</div>
+                        <h2 id="roleName">Killer</h2>
+                        <p id="roleDesc">Eliminate the villagers without getting caught.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" id="toggleRoleBtn">Hide Role</button>
+        </div>
+    </main>
+
+    <!-- Kicked overlay -->
+    <div class="overlay hidden" id="kickedOverlay">
+        <div class="overlay-card glass-card">
+            <div class="logo-icon small">🚫</div>
+            <h2>Removed from Lobby</h2>
+            <p id="kickedMsg">You have been removed by the admin.</p>
+            <a href="/" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+
+    <!-- Lobby closed overlay -->
+    <div class="overlay hidden" id="closedOverlay">
+        <div class="overlay-card glass-card">
+            <div class="logo-icon small">🔒</div>
+            <h2>Lobby Closed</h2>
+            <p>The admin has left and the lobby has been closed.</p>
+            <a href="/" class="btn btn-primary">Back to Home</a>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket-client.js"></script>
+    <script>
+        // Pre-fill lobby code from URL
+        const params = new URLSearchParams(window.location.search);
+        const codeParam = params.get('code');
+        if (codeParam) {
+            document.getElementById('lobbyCode').value = codeParam.toUpperCase();
+        }
+
+        document.getElementById('joinForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const code = document.getElementById('lobbyCode').value.trim();
+            const name = document.getElementById('playerName').value.trim();
+            if (!code || !name) return;
+            joinLobby(code, name);
+        });
+    </script>
+</body>
+
+</html>

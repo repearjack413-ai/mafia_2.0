@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lobby — Mafia</title>
+    <meta name="description" content="Mafia game lobby. Share the QR code and manage the game.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <div class="bg-particles" id="particles"></div>
+
+    <main class="lobby-page">
+        <div class="lobby-header">
+            <a href="/" class="back-link">← Back to Home</a>
+            <div class="lobby-title-row">
+                <div>
+                    <h1>Game Lobby</h1>
+                    <p class="lobby-subtitle">You are the <strong>Storyteller</strong></p>
+                </div>
+                <div class="lobby-code-display">
+                    <span class="code-label">Lobby Code</span>
+                    <span class="code-value" id="lobbyCodeDisplay">------</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="lobby-grid">
+            <!-- Left: QR + Share -->
+            <div class="lobby-panel glass-card qr-panel">
+                <h2>📱 Share & Join</h2>
+                <p class="panel-desc">Players can scan this QR code or enter the lobby code to join</p>
+                <div class="qr-container" id="qrContainer">
+                    <div class="qr-loading">Generating QR code...</div>
+                </div>
+                <div class="join-url-display" id="joinUrlDisplay"></div>
+            </div>
+
+            <!-- Right: Players -->
+            <div class="lobby-panel glass-card players-panel">
+                <div class="panel-header">
+                    <h2>👥 Players</h2>
+                    <span class="player-count" id="playerCount">0</span>
+                </div>
+                <p class="panel-desc">Minimum 4 players required to start</p>
+
+                <ul class="player-list admin-view" id="playerList">
+                    <li class="empty-state">
+                        <span class="empty-icon">👻</span>
+                        <span>Waiting for players to join...</span>
+                    </li>
+                </ul>
+
+                <div class="lobby-actions">
+                    <button class="btn btn-primary btn-full" id="assignRolesBtn" disabled>
+                        <span>🎭 Assign Roles</span>
+                    </button>
+                    <button class="btn btn-secondary btn-full hidden" id="resetBtn">
+                        <span>🔄 Reset & Reassign</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Roles Table (shown after assignment) -->
+        <div class="roles-table-section glass-card hidden" id="rolesSection">
+            <h2>🎭 Assigned Roles</h2>
+            <p class="panel-desc">Only you (the storyteller) can see this</p>
+            <div class="roles-table-wrap">
+                <table class="roles-table" id="rolesTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Player</th>
+                            <th>Role</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rolesTableBody"></tbody>
+                </table>
+            </div>
+            <div class="role-summary" id="roleSummary"></div>
+        </div>
+    </main>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket-client.js"></script>
+</body>
+
+</html>
