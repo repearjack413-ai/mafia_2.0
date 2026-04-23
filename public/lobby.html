@@ -1,96 +1,172 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lobby — Mafia</title>
-    <meta name="description" content="Mafia game lobby. Share the QR code and manage the game.">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Storyteller Table | Mafia</title>
+  <meta name="description" content="Manage a live Mafia table, invite players, and assign roles.">
+  <meta name="theme-color" content="#09080d">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
+  <link rel="stylesheet" href="/css/style.css">
 </head>
+<body data-page="lobby">
+  <div class="site-bg" aria-hidden="true"></div>
+  <div class="site-noise" aria-hidden="true"></div>
 
-<body>
-    <div class="bg-particles" id="particles"></div>
+  <header class="topbar shell">
+    <a class="brand" href="/">
+      <span class="brand-mark">M</span>
+      <span class="brand-copy">
+        <span class="brand-title">Mafia Table</span>
+        <span class="brand-subtitle">Storyteller Console</span>
+      </span>
+    </a>
+    <div class="topbar-actions">
+      <a class="btn btn-ghost" href="/">Leave Table</a>
+    </div>
+  </header>
 
-    <main class="lobby-page">
-        <div class="lobby-header">
-            <a href="/" class="back-link">← Back to Home</a>
-            <div class="lobby-title-row">
-                <div>
-                    <h1>Game Lobby</h1>
-                    <p class="lobby-subtitle">You are the <strong>Storyteller</strong></p>
-                </div>
-                <div class="lobby-code-display">
-                    <span class="code-label">Lobby Code</span>
-                    <span class="code-value" id="lobbyCodeDisplay">------</span>
-                </div>
-            </div>
+  <main class="shell lobby-shell">
+    <section class="lobby-hero luxury-panel">
+      <div class="hero-headline">
+        <div>
+          <p class="section-kicker">Storyteller Seat</p>
+          <h1>Control the room in one place</h1>
+          <p class="section-description">
+            Invite players, watch reconnect status, assign roles only when the table is ready, and recover the
+            whole session if the host page refreshes.
+          </p>
+        </div>
+        <span class="signal-pill" id="hostStatusPill">Storyteller online</span>
+      </div>
+
+      <div class="hero-metrics">
+        <article class="metric-card">
+          <span class="metric-label">Table code</span>
+          <strong class="metric-emphasis" id="lobbyCodeDisplay">------</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Connected seats</span>
+          <strong class="metric-emphasis" id="playerCount">0</strong>
+        </article>
+        <article class="metric-card">
+          <span class="metric-label">Table state</span>
+          <strong class="metric-emphasis" id="tableStateLabel">Waiting for players</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="lobby-grid">
+      <article class="luxury-panel share-panel">
+        <div class="section-heading">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 7h10v10H7z" />
+              <path d="M4 12h3M17 12h3M12 4v3M12 17v3" />
+            </svg>
+          </span>
+          <div>
+            <p class="section-kicker">Invite</p>
+            <h2>Share the live join link</h2>
+          </div>
+        </div>
+        <p class="section-description">Players can scan this QR or use the invite URL below.</p>
+
+        <div class="qr-frame" id="qrContainer">
+          <div class="qr-loading">Generating secure invite QR...</div>
         </div>
 
-        <div class="lobby-grid">
-            <!-- Left: QR + Share -->
-            <div class="lobby-panel glass-card qr-panel">
-                <h2>📱 Share & Join</h2>
-                <p class="panel-desc">Players can scan this QR code or enter the lobby code to join</p>
-                <div class="qr-container" id="qrContainer">
-                    <div class="qr-loading">Generating QR code...</div>
-                </div>
-                <div class="join-url-display" id="joinUrlDisplay"></div>
-            </div>
+        <div class="join-link" id="joinUrlDisplay">Invite URL will appear here.</div>
 
-            <!-- Right: Players -->
-            <div class="lobby-panel glass-card players-panel">
-                <div class="panel-header">
-                    <h2>👥 Players</h2>
-                    <span class="player-count" id="playerCount">0</span>
-                </div>
-                <p class="panel-desc">Minimum 4 players required to start</p>
+        <div class="button-row">
+          <button class="btn btn-secondary" id="copyCodeBtn" type="button">Copy Code</button>
+          <button class="btn btn-primary" id="copyUrlBtn" type="button">Copy Invite Link</button>
+        </div>
+      </article>
 
-                <ul class="player-list admin-view" id="playerList">
-                    <li class="empty-state">
-                        <span class="empty-icon">👻</span>
-                        <span>Waiting for players to join...</span>
-                    </li>
-                </ul>
-
-                <div class="lobby-actions">
-                    <button class="btn btn-primary btn-full" id="assignRolesBtn" disabled>
-                        <span>🎭 Assign Roles</span>
-                    </button>
-                    <button class="btn btn-secondary btn-full hidden" id="resetBtn">
-                        <span>🔄 Reset & Reassign</span>
-                    </button>
-                </div>
-            </div>
+      <article class="luxury-panel roster-panel">
+        <div class="section-heading">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 18v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" />
+              <path d="M9 8a3 3 0 1 0 0-.01M15 8a3 3 0 1 0 0-.01" />
+            </svg>
+          </span>
+          <div>
+            <p class="section-kicker">Roster</p>
+            <h2>Track every seat</h2>
+          </div>
         </div>
 
-        <!-- Roles Table (shown after assignment) -->
-        <div class="roles-table-section glass-card hidden" id="rolesSection">
-            <h2>🎭 Assigned Roles</h2>
-            <p class="panel-desc">Only you (the storyteller) can see this</p>
-            <div class="roles-table-wrap">
-                <table class="roles-table" id="rolesTable">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Player</th>
-                            <th>Role</th>
-                        </tr>
-                    </thead>
-                    <tbody id="rolesTableBody"></tbody>
-                </table>
-            </div>
-            <div class="role-summary" id="roleSummary"></div>
+        <div class="roster-summary">
+          <span id="playerCountSummary">0 players connected</span>
+          <span id="rosterHint">Need 4 connected players to assign roles.</span>
         </div>
-    </main>
 
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="/js/socket-client.js"></script>
+        <ul class="roster-list" id="playerList">
+          <li class="empty-roster">No players yet. Share the invite and fill the room.</li>
+        </ul>
+
+        <div class="action-stack">
+          <button class="btn btn-primary btn-full" id="assignRolesBtn" type="button" disabled>
+            Assign Roles
+          </button>
+          <button class="btn btn-secondary btn-full hidden" id="resetBtn" type="button">
+            Reset and Reassign
+          </button>
+        </div>
+      </article>
+    </section>
+
+    <section class="luxury-panel roles-panel hidden" id="rolesSection">
+      <div class="section-heading">
+        <span class="section-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l7 4v5c0 4.4-2.7 7.8-7 9-4.3-1.2-7-4.6-7-9V7l7-4z" />
+          </svg>
+        </span>
+        <div>
+          <p class="section-kicker">Role Ledger</p>
+          <h2>Storyteller-only assignments</h2>
+        </div>
+      </div>
+
+      <div class="role-summary" id="roleSummary"></div>
+
+      <div class="table-wrap">
+        <table class="roles-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Player</th>
+              <th>Status</th>
+              <th>Role</th>
+            </tr>
+          </thead>
+          <tbody id="rolesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="luxury-panel empty-panel hidden" id="lobbyEmptyState">
+      <p class="section-kicker">Session unavailable</p>
+      <h2 id="emptyStateTitle">This storyteller session cannot be restored.</h2>
+      <p class="section-description" id="emptyStateMessage">
+        The lobby may have closed, or this browser is not the original storyteller session.
+      </p>
+      <div class="button-row">
+        <a class="btn btn-secondary" href="/">Back Home</a>
+        <a class="btn btn-primary" href="/lobby.html?new=1">Start a New Table</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/socket-client.js"></script>
 </body>
-
 </html>

@@ -16,6 +16,22 @@ App URLs:
 - Lobby page: `http://localhost:3000/lobby.html`
 - Healthcheck: `http://localhost:3000/health`
 
+## Test the multiplayer flows
+
+```bash
+npm test
+```
+
+The integration test suite covers:
+
+- QR invite URLs using the public deployment domain
+- multiplayer create/join/assign/reset flows
+- duplicate-name rejection
+- reconnect-safe player restores
+- storyteller refresh restores
+- grace-period cleanup for disconnected players
+- final lobby closure when the storyteller does not return
+
 ## Deploy to Railway
 
 This repo is preconfigured for Railway with `railway.json`:
@@ -49,4 +65,5 @@ railway domain
 
 - Railway injects `PORT`, and the app already listens on `process.env.PORT || 3000`.
 - If you later add a custom domain or want to override the detected base URL, set `PUBLIC_APP_URL`.
-- Lobby state is stored in memory, so active lobbies are lost on restart or redeploy.
+- Sessions are reconnect-safe across browser refreshes, but lobby state is still stored in memory.
+- Active lobbies are still lost on server restart or redeploy until persistent storage is added.

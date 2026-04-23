@@ -3,71 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mafia — The Game of Deception</title>
-  <meta name="description" content="Create or join a Mafia game lobby. Assign roles and play with friends in real-time.">
+  <title>Mafia Table | Luxury Party Game Control</title>
+  <meta
+    name="description"
+    content="Host polished Mafia nights with QR invites, reconnect-safe sessions, and a cinematic luxury game interface."
+  >
+  <meta name="theme-color" content="#09080d">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  >
   <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
-  <div class="bg-particles" id="particles"></div>
+<body data-page="home">
+  <div class="site-bg" aria-hidden="true"></div>
+  <div class="site-noise" aria-hidden="true"></div>
 
-  <main class="landing">
-    <div class="landing-content">
-      <div class="logo-section">
-        <div class="logo-icon">🎭</div>
-        <h1 class="logo-title">MAFIA</h1>
-        <p class="logo-subtitle">The Game of Deception</p>
-      </div>
+  <header class="topbar shell">
+    <a class="brand" href="/">
+      <span class="brand-mark">M</span>
+      <span class="brand-copy">
+        <span class="brand-title">Mafia Table</span>
+        <span class="brand-subtitle">Realtime Storyteller Control</span>
+      </span>
+    </a>
+    <div class="topbar-actions">
+      <button class="btn btn-ghost hidden" id="resumeBtn" type="button">Resume Last Table</button>
+      <a class="btn btn-ghost" href="/join.html">Join a Table</a>
+    </div>
+  </header>
 
-      <div class="action-cards">
-        <a href="#" class="action-card" id="createBtn">
-          <div class="card-icon">👑</div>
-          <h2>Create Lobby</h2>
-          <p>Start a new game as the storyteller. Share the QR code with your friends.</p>
-          <span class="card-arrow">→</span>
-        </a>
+  <main class="shell home-shell">
+    <section class="hero-card luxury-panel">
+      <div class="eyebrow">Luxury Party Game Suite</div>
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <h1 class="hero-title">Run Mafia night like a private club, not a spreadsheet.</h1>
+          <p class="hero-text">
+            Open a table, share a QR invite, manage players in real time, and restore your session if the
+            storyteller refreshes or reconnects.
+          </p>
 
-        <a href="/join.html" class="action-card">
-          <div class="card-icon">🚪</div>
-          <h2>Join Lobby</h2>
-          <p>Enter a lobby code or scan a QR code to join an existing game.</p>
-          <span class="card-arrow">→</span>
-        </a>
-      </div>
-
-      <div class="roles-preview">
-        <h3>Roles in the Game</h3>
-        <div class="roles-list">
-          <div class="role-badge role-killer">
-            <span class="role-emoji">🔪</span>
-            <span>Killer</span>
+          <div class="hero-actions">
+            <button class="btn btn-primary" id="createBtn" type="button">
+              <span class="icon-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3v18M3 12h18" />
+                </svg>
+              </span>
+              Start Storyteller Table
+            </button>
+            <a class="btn btn-secondary" href="/join.html">
+              <span class="icon-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M14 5l7 7-7 7" />
+                  <path d="M21 12H3" />
+                </svg>
+              </span>
+              Join Existing Table
+            </a>
           </div>
-          <div class="role-badge role-doctor">
-            <span class="role-emoji">💉</span>
-            <span>Doctor</span>
+
+          <div class="trust-grid">
+            <article class="trust-chip">
+              <span class="trust-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 4h16v16H4z" />
+                  <path d="M8 9h8M8 13h5" />
+                </svg>
+              </span>
+              <span>Reconnect-safe storyteller control</span>
+            </article>
+            <article class="trust-chip">
+              <span class="trust-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M7 7h10v10H7z" />
+                  <path d="M4 12h3M17 12h3M12 4v3M12 17v3" />
+                </svg>
+              </span>
+              <span>QR invites generated from the live server domain</span>
+            </article>
+            <article class="trust-chip">
+              <span class="trust-icon">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 3l8 4v5c0 5-3.4 8-8 9-4.6-1-8-4-8-9V7l8-4z" />
+                  <path d="M9 12l2 2 4-4" />
+                </svg>
+              </span>
+              <span>Private role delivery for each player</span>
+            </article>
           </div>
-          <div class="role-badge role-villager">
-            <span class="role-emoji">🏘️</span>
-            <span>Villager</span>
+        </div>
+
+        <div class="hero-stage">
+          <div class="stage-card stage-card-main">
+            <div class="stage-label">Table System</div>
+            <h2>Host view</h2>
+            <ul class="stage-list">
+              <li>Invite players with one scan</li>
+              <li>Track online and reconnecting seats</li>
+              <li>Reassign roles without remaking the table</li>
+            </ul>
+          </div>
+          <div class="stage-card stage-card-secondary">
+            <div class="stage-label">Player flow</div>
+            <h3>Scan. Join. Reveal.</h3>
+            <p>Fast enough for living rooms. Clean enough for paid events.</p>
           </div>
         </div>
       </div>
-    </div>
+    </section>
 
-    <footer class="landing-footer">
-      <p>Play locally with friends • No account needed</p>
-    </footer>
+    <section class="section-grid">
+      <article class="luxury-panel info-card">
+        <div class="section-heading">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 7h16M7 4v6M17 4v6M5 11h14v9H5z" />
+            </svg>
+          </span>
+          <div>
+            <p class="section-kicker">Flow</p>
+            <h2>How the table runs</h2>
+          </div>
+        </div>
+        <ol class="sequence-list">
+          <li>Create the storyteller table and share the invite link or QR.</li>
+          <li>Players join from any device using the same live server.</li>
+          <li>Assign roles only when enough connected seats are present.</li>
+          <li>Reset and replay without rebuilding the room.</li>
+        </ol>
+      </article>
+
+      <article class="luxury-panel info-card">
+        <div class="section-heading">
+          <span class="section-icon">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 6h16v12H4z" />
+              <path d="M8 10h8M8 14h5" />
+            </svg>
+          </span>
+          <div>
+            <p class="section-kicker">Ready for play</p>
+            <h2>Designed for hosted sessions</h2>
+          </div>
+        </div>
+        <div class="metric-grid">
+          <div class="metric-card">
+            <span class="metric-value">4</span>
+            <span class="metric-label">Minimum connected players</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-value">12</span>
+            <span class="metric-label">Seat cap by default</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-value">1</span>
+            <span class="metric-label">Storyteller control surface</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-value">Live</span>
+            <span class="metric-label">Socket-based sync</span>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="roles-showcase luxury-panel">
+      <div class="section-heading">
+        <span class="section-icon">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3l7 4v5c0 4.4-2.7 7.8-7 9-4.3-1.2-7-4.6-7-9V7l7-4z" />
+          </svg>
+        </span>
+        <div>
+          <p class="section-kicker">Roles</p>
+          <h2>Every role gets a clean reveal moment</h2>
+        </div>
+      </div>
+
+      <div class="role-grid">
+        <article class="role-panel role-panel-killer">
+          <div class="role-glyph">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 4l6 6-9 9-6 1 1-6 8-8z" />
+              <path d="M13 5l6 6" />
+            </svg>
+          </div>
+          <h3>Killer</h3>
+          <p>Move quietly, direct suspicion elsewhere, and keep control of the table narrative.</p>
+        </article>
+        <article class="role-panel role-panel-doctor">
+          <div class="role-glyph">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" />
+              <path d="M7 3h10v18H7z" />
+            </svg>
+          </div>
+          <h3>Doctor</h3>
+          <p>Protect key players and keep the room stable when accusations start spiraling.</p>
+        </article>
+        <article class="role-panel role-panel-villager">
+          <div class="role-glyph">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M4 18h16" />
+              <path d="M6 18V9l6-4 6 4v9" />
+              <path d="M10 18v-4h4v4" />
+            </svg>
+          </div>
+          <h3>Villager</h3>
+          <p>Read the room, compare tells, and use discussion better than the killers use chaos.</p>
+        </article>
+      </div>
+    </section>
   </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/socket-client.js"></script>
-  <script>
-    document.getElementById('createBtn').addEventListener('click', (e) => {
-      e.preventDefault();
-      createLobby();
-    });
-  </script>
 </body>
 </html>
