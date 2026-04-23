@@ -10,6 +10,7 @@ const DEFAULT_CODE_LENGTH = 6;
 const DEFAULT_MAX_PLAYERS = 12;
 const DEFAULT_PLAYER_GRACE_MS = 45000;
 const DEFAULT_ADMIN_GRACE_MS = 60000;
+const TEST_GAME_PLAYER_NAMES = ['Ava', 'Noah', 'Mila', 'Luca', 'Iris', 'Theo'];
 
 function generateCode(existingLobbies, length = DEFAULT_CODE_LENGTH) {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -54,7 +55,8 @@ function serializePlayer(player) {
   return {
     id: player.sessionId,
     name: player.name,
-    connected: Boolean(player.connected)
+    connected: Boolean(player.connected),
+    isTestPlayer: Boolean(player.isTestPlayer)
   };
 }
 
@@ -102,8 +104,13 @@ function getAdminAssignments(lobby) {
       id: player.sessionId,
       name: player.name,
       connected: player.connected,
-      role: player.role || null
+      role: player.role || null,
+      isTestPlayer: Boolean(player.isTestPlayer)
     }));
+}
+
+function getOrderedPlayers(lobby) {
+  return Array.from(lobby.players.values()).sort((a, b) => a.joinedAt - b.joinedAt);
 }
 
 function createAppServer(options = {}) {
@@ -251,6 +258,64 @@ function createAppServer(options = {}) {
 
   function restorePlayerRole(player) {
     return player.role ? { role: player.role } : null;
+  }
+
+  function assignRolesInLobby(lobby) {
+    const orderedPlayers = getOrderedPlayers(lobby);
+    const roles = assignRoles(orderedPlayers);
+
+    lobby.rolesAssigned = true;
+    lobby.roles = {};
+
+    orderedPlayers.forEach((player, index) => {
+      player.role = roles[index];
+      lobby.roles[player.sessionId] = player.role;
+      if (player.socketId) {
+        io.to(player.socketId).emit('role-assigned', { role: player.role, restored: false });
+      }
+    });
+
+    return orderedPlayers.map((player) => ({
+      id: player.sessionId,
+      name: player.name,
+      connected: player.connected,
+      role: player.role,
+      isTestPlayer: Boolean(player.isTestPlayer)
+    }));
+  }
+
+  function hasHumanPlayers(lobby) {
+    return Array.from(lobby.players.values()).some((player) => !player.isTestPlayer);
+  }
+
+  function clearTestPlayers(lobby) {
+    for (const [sessionId, player] of lobby.players.entries()) {
+      if (player.isTestPlayer) {
+        clearTimer(player.removeTimer);
+        lobby.players.delete(sessionId);
+      }
+    }
+  }
+
+  function seedTestPlayers(lobby) {
+    clearTestPlayers(lobby);
+    lobby.rolesAssigned = false;
+    lobby.roles = {};
+
+    const seededAt = Date.now();
+    TEST_GAME_PLAYER_NAMES.forEach((name, index) => {
+      const sessionId = `test-${uuidv4()}`;
+      lobby.players.set(sessionId, {
+        sessionId,
+        socketId: null,
+        name,
+        connected: true,
+        joinedAt: seededAt + index,
+        role: null,
+        removeTimer: null,
+        isTestPlayer: true
+      });
+    });
   }
 
   app.get('/health', (req, res) => {
@@ -455,30 +520,37 @@ function createAppServer(options = {}) {
         return callback({ error: 'Need at least 4 connected players to assign roles.' });
       }
 
-      const orderedPlayers = Array.from(lobby.players.values()).sort((a, b) => a.joinedAt - b.joinedAt);
-      const roles = assignRoles(orderedPlayers);
-
-      lobby.rolesAssigned = true;
-      lobby.roles = {};
-
-      orderedPlayers.forEach((player, index) => {
-        player.role = roles[index];
-        lobby.roles[player.sessionId] = player.role;
-        if (player.socketId) {
-          io.to(player.socketId).emit('role-assigned', { role: player.role, restored: false });
-        }
-      });
+      const assignments = assignRolesInLobby(lobby);
 
       broadcastLobbyState(lobby.code, { type: 'roles-assigned' });
 
       return callback({
         success: true,
-        assignments: orderedPlayers.map((player) => ({
-          id: player.sessionId,
-          name: player.name,
-          connected: player.connected,
-          role: player.role
-        }))
+        assignments
+      });
+    });
+
+    socket.on('run-test-game', ({ code } = {}, callback = () => {}) => {
+      const normalizedCode = normalizeCode(code);
+      const lobby = lobbies.get(normalizedCode);
+
+      if (!lobby) return callback({ error: 'Lobby not found.' });
+      if (lobby.admin.socketId !== socket.id) {
+        return callback({ error: 'Only the storyteller can run the test game.' });
+      }
+      if (hasHumanPlayers(lobby)) {
+        return callback({ error: 'Remove real players before running the test game.' });
+      }
+
+      seedTestPlayers(lobby);
+      const assignments = assignRolesInLobby(lobby);
+
+      broadcastLobbyState(lobby.code, { type: 'test-game-ready' });
+
+      return callback({
+        success: true,
+        lobby: serializeLobby(lobby),
+        assignments
       });
     });
 

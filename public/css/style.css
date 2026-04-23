@@ -741,6 +741,12 @@ svg {
   color: #ffd8aa;
 }
 
+.seat-pill-test {
+  background: var(--gold-faint);
+  color: var(--gold-bright);
+  border: 1px solid rgba(220, 182, 109, 0.18);
+}
+
 .seat-action {
   min-height: 34px;
   padding: 0 14px;

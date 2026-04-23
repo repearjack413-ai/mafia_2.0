@@ -52,7 +52,8 @@ const state = {
   playerSessionId: null,
   playerName: '',
   assignments: [],
-  hasConnectedOnce: false
+  hasConnectedOnce: false,
+  requestedDemoMode: false
 };
 
 function $(id) {
@@ -245,6 +246,9 @@ function renderRoster(players, isAdminView) {
     .map((player, index) => {
       const statusLabel = player.connected ? 'Connected' : 'Reconnecting';
       const statusClass = player.connected ? 'seat-pill-online' : 'seat-pill-offline';
+      const playerTypeTag = player.isTestPlayer
+        ? '<span class="seat-pill seat-pill-test">Test seat</span>'
+        : '';
       const kickButton = isAdminView
         ? `<button class="seat-action" type="button" data-kick-player="${escapeHtml(player.id)}">Remove</button>`
         : '';
@@ -259,6 +263,7 @@ function renderRoster(players, isAdminView) {
             </div>
           </div>
           <div class="seat-aside">
+            ${playerTypeTag}
             <span class="seat-pill ${statusClass}">${statusLabel}</span>
             ${kickButton}
           </div>
@@ -286,11 +291,12 @@ function renderAssignments(assignments) {
     .map((assignment, index) => {
       const meta = ROLE_META[assignment.role] || ROLE_META.Villager;
       const statusClass = assignment.connected ? 'seat-pill-online' : 'seat-pill-offline';
+      const playerType = assignment.isTestPlayer ? '<span class="seat-pill seat-pill-test">Test</span>' : '';
       return `
         <tr>
           <td>${index + 1}</td>
           <td>${escapeHtml(assignment.name)}</td>
-          <td><span class="seat-pill ${statusClass}">${assignment.connected ? 'Connected' : 'Offline'}</span></td>
+          <td>${playerType} <span class="seat-pill ${statusClass}">${assignment.connected ? 'Connected' : 'Offline'}</span></td>
           <td><span class="role-tag ${meta.className}">${meta.title}</span></td>
         </tr>
       `;
@@ -533,10 +539,18 @@ function initHomePage() {
   renderResumeButton();
 
   const createButton = $('createBtn');
+  const testGameButton = $('testGameBtn');
   if (createButton) {
     createButton.addEventListener('click', () => {
       clearAdminSession();
       window.location.href = '/lobby.html?new=1';
+    });
+  }
+
+  if (testGameButton) {
+    testGameButton.addEventListener('click', () => {
+      clearAdminSession();
+      window.location.href = '/lobby.html?new=1&demo=1';
     });
   }
 }
@@ -561,13 +575,17 @@ function initLobbyPage() {
   const params = new URLSearchParams(window.location.search);
   const requestedCode = normalizeCode(params.get('code'));
   const requestedNew = params.get('new') === '1';
+  const requestedDemo = params.get('demo') === '1' || params.get('test') === '1';
   const stored = getAdminSession();
 
   const copyCodeBtn = $('copyCodeBtn');
   const copyUrlBtn = $('copyUrlBtn');
+  const runTestGameButton = $('runTestGameBtn');
   const assignButton = $('assignRolesBtn');
   const resetButton = $('resetBtn');
   const playerList = $('playerList');
+
+  state.requestedDemoMode = requestedDemo;
 
   if (copyCodeBtn) {
     copyCodeBtn.addEventListener('click', () => copyText(state.currentLobbyCode, 'Lobby code copied.'));
@@ -575,6 +593,41 @@ function initLobbyPage() {
 
   if (copyUrlBtn) {
     copyUrlBtn.addEventListener('click', () => copyText(state.joinUrl, 'Invite link copied.'));
+  }
+
+  function runTestGame({ suppressToast = false } = {}) {
+    if (runTestGameButton) {
+      setButtonBusy(runTestGameButton, true, 'Loading Demo...');
+    }
+
+    socket.emit('run-test-game', { code: state.currentLobbyCode }, (data) => {
+      if (runTestGameButton) {
+        setButtonBusy(runTestGameButton, false, 'Run Test Game');
+      }
+
+      if (data.error) {
+        if (!suppressToast) {
+          showToast(data.error, 'error');
+        }
+        return;
+      }
+
+      if (data.lobby) {
+        updateLobbyState(data.lobby);
+      }
+      state.assignments = data.assignments || [];
+      renderAssignments(state.assignments);
+
+      if (!suppressToast) {
+        showToast('Test game loaded with mock players and roles.', 'success');
+      }
+    });
+  }
+
+  if (runTestGameButton) {
+    runTestGameButton.addEventListener('click', () => {
+      runTestGame();
+    });
   }
 
   if (assignButton) {
@@ -637,7 +690,12 @@ function initLobbyPage() {
         return;
       }
       handleLobbyCreateOrRestore(data);
-      showToast('New storyteller table opened.', 'success');
+      if (state.requestedDemoMode) {
+        showToast('Storyteller table opened. Preparing the test game...', 'info');
+        runTestGame({ suppressToast: true });
+      } else {
+        showToast('New storyteller table opened.', 'success');
+      }
     });
   }
 
@@ -654,7 +712,12 @@ function initLobbyPage() {
       }
 
       handleLobbyCreateOrRestore(data);
-      showToast('Storyteller table restored.', 'success');
+      if (state.requestedDemoMode) {
+        showToast('Storyteller table restored. Preparing the test game...', 'info');
+        runTestGame({ suppressToast: true });
+      } else {
+        showToast('Storyteller table restored.', 'success');
+      }
     });
   }
 
@@ -753,6 +816,10 @@ socket.on('lobby-state', (payload) => {
 
   if (eventType === 'player-restored' && state.currentPage === 'lobby') {
     showToast(`${payload.event.name} reconnected to their seat.`, 'info');
+  }
+
+  if (eventType === 'test-game-ready' && state.currentPage === 'lobby') {
+    showToast('Test game is ready to inspect.', 'success');
   }
 });
 

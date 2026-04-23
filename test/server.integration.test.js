@@ -283,6 +283,43 @@ async function testLobbyClosesWhenStorytellerDoesNotReturn() {
   }
 }
 
+async function testRunTestGameSeedsMockPlayersAndRejectsHumanMixing() {
+  const { runtime, baseUrl } = await startTestServer();
+  const admin = await connectClient(baseUrl);
+  const humanPlayer = await connectClient(baseUrl);
+
+  try {
+    const created = await emitAck(admin, 'create-lobby', { adminSessionId: 'admin-demo' });
+    assert.equal(created.success, true);
+
+    const seeded = await emitAck(admin, 'run-test-game', { code: created.code });
+    assert.equal(seeded.success, true);
+    assert.equal(seeded.lobby.playerCount, 6);
+    assert.equal(seeded.assignments.length, 6);
+    seeded.assignments.forEach((assignment) => {
+      assert.equal(assignment.isTestPlayer, true);
+      assert.ok(['Killer', 'Doctor', 'Villager'].includes(assignment.role));
+    });
+
+    const reset = await emitAck(admin, 'reset-lobby', { code: created.code });
+    assert.equal(reset.success, true);
+
+    const joined = await emitAck(humanPlayer, 'join-lobby', {
+      code: created.code,
+      name: 'Nina',
+      playerSessionId: 'human-nina'
+    });
+    assert.equal(joined.success, true);
+
+    const denied = await emitAck(admin, 'run-test-game', { code: created.code });
+    assert.match(denied.error, /remove real players/i);
+  } finally {
+    humanPlayer.disconnect();
+    admin.disconnect();
+    await runtime.close();
+  }
+}
+
 async function main() {
   await runCase('QR URL uses the configured public app domain', testQrUrlUsesConfiguredPublicDomain);
   await runCase('complete multiplayer game flow assigns roles, blocks duplicate names, and resets cleanly', testCompleteMultiplayerGameFlow);
@@ -290,6 +327,7 @@ async function main() {
   await runCase('admin refresh restores the existing lobby instead of creating a new one', testAdminRefreshRestoresLobby);
   await runCase('disconnected players are removed after the reconnect grace period', testDisconnectedPlayerIsRemovedAfterGracePeriod);
   await runCase('the lobby closes if the storyteller does not return before the grace period ends', testLobbyClosesWhenStorytellerDoesNotReturn);
+  await runCase('run test game seeds mock players and refuses to mix with human players', testRunTestGameSeedsMockPlayersAndRejectsHumanMixing);
 
   if (process.exitCode) {
     process.exit(process.exitCode);
