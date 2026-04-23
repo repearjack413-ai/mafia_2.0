@@ -11,6 +11,8 @@ const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', true);
+
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -42,6 +44,30 @@ function getLocalIP() {
 
 const LOCAL_IP = getLocalIP();
 
+function getPublicBaseUrl(req) {
+  const explicitBaseUrl = process.env.PUBLIC_APP_URL || process.env.APP_BASE_URL;
+  if (explicitBaseUrl) {
+    return explicitBaseUrl.replace(/\/$/, '');
+  }
+
+  if (process.env.RAILWAY_PUBLIC_DOMAIN) {
+    return `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`;
+  }
+
+  const forwardedProto = req.get('x-forwarded-proto');
+  const forwardedHost = req.get('x-forwarded-host');
+  if (forwardedProto && forwardedHost) {
+    return `${forwardedProto}://${forwardedHost}`;
+  }
+
+  const host = req.get('host');
+  if (host) {
+    return `${req.protocol}://${host}`;
+  }
+
+  return `http://localhost:${PORT}`;
+}
+
 app.get('/health', (req, res) => {
   res.status(200).json({
     ok: true,
@@ -65,7 +91,7 @@ app.get('/api/lobby/:code', (req, res) => {
 app.get('/api/qrcode/:code', async (req, res) => {
   const code = req.params.code.toUpperCase();
   if (!lobbies.has(code)) return res.status(404).json({ error: 'Lobby not found' });
-  const joinURL = `http://${LOCAL_IP}:${PORT}/join.html?code=${code}`;
+  const joinURL = `${getPublicBaseUrl(req)}/join.html?code=${encodeURIComponent(code)}`;
   try {
     const dataURL = await QRCode.toDataURL(joinURL, {
       width: 300,

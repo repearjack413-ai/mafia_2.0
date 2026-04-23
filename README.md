@@ -24,6 +24,7 @@ This repo is preconfigured for Railway with `railway.json`:
 - start command: `node server.js`
 - healthcheck path: `/health`
 - restart policy: `ON_FAILURE`
+- QR join links use `RAILWAY_PUBLIC_DOMAIN` automatically on Railway
 
 ### GitHub deploy
 
@@ -47,4 +48,5 @@ railway domain
 ## Notes
 
 - Railway injects `PORT`, and the app already listens on `process.env.PORT || 3000`.
+- If you later add a custom domain or want to override the detected base URL, set `PUBLIC_APP_URL`.
 - Lobby state is stored in memory, so active lobbies are lost on restart or redeploy.
