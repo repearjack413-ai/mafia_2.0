@@ -747,6 +747,22 @@ svg {
   border: 1px solid rgba(220, 182, 109, 0.18);
 }
 
+.seat-preview-trigger {
+  cursor: pointer;
+  font: inherit;
+}
+
+.seat-preview-trigger:hover,
+.seat-preview-trigger:focus-visible {
+  background: rgba(220, 182, 109, 0.18);
+  transform: translateY(-1px);
+}
+
+.seat-preview-trigger:focus-visible {
+  outline: 2px solid rgba(242, 209, 139, 0.35);
+  outline-offset: 2px;
+}
+
 .seat-action {
   min-height: 34px;
   padding: 0 14px;
@@ -1019,6 +1035,36 @@ svg {
   text-align: center;
 }
 
+.seat-preview-card {
+  width: min(100%, 760px);
+  max-height: calc(100vh - 36px);
+  overflow-y: auto;
+  padding: 30px;
+  text-align: left;
+}
+
+.seat-preview-headline {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 22px;
+}
+
+.seat-preview-summary {
+  margin: 0 0 24px;
+}
+
+.seat-preview-stage {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.seat-preview-empty {
+  text-align: center;
+}
+
 .toast-stack {
   position: fixed;
   top: 18px;
@@ -1117,6 +1163,7 @@ svg {
   .waiting-topline,
   .role-stage-topline,
   .hero-headline,
+  .seat-preview-headline,
   .roster-summary,
   .hero-actions,
   .button-row,
@@ -1129,6 +1176,7 @@ svg {
   .join-stage,
   .waiting-stage,
   .role-stage,
+  .seat-preview-card,
   .share-panel,
   .roster-panel,
   .roles-panel,

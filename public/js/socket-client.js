@@ -53,7 +53,8 @@ const state = {
   playerName: '',
   assignments: [],
   hasConnectedOnce: false,
-  requestedDemoMode: false
+  requestedDemoMode: false,
+  previewPlayerId: null
 };
 
 function $(id) {
@@ -200,6 +201,22 @@ function setJoinError(message) {
   box.classList.remove('hidden');
 }
 
+function hasTestSeats(lobby) {
+  return Boolean(lobby && Array.isArray(lobby.players) && lobby.players.some((player) => player.isTestPlayer));
+}
+
+function findLobbyPlayer(playerId) {
+  if (!state.currentLobby || !Array.isArray(state.currentLobby.players)) {
+    return null;
+  }
+
+  return state.currentLobby.players.find((player) => player.id === playerId) || null;
+}
+
+function findAssignment(playerId) {
+  return state.assignments.find((assignment) => assignment.id === playerId) || null;
+}
+
 function renderResumeButton() {
   const resumeBtn = $('resumeBtn');
   if (!resumeBtn) return;
@@ -247,7 +264,9 @@ function renderRoster(players, isAdminView) {
       const statusLabel = player.connected ? 'Connected' : 'Reconnecting';
       const statusClass = player.connected ? 'seat-pill-online' : 'seat-pill-offline';
       const playerTypeTag = player.isTestPlayer
-        ? '<span class="seat-pill seat-pill-test">Test seat</span>'
+        ? isAdminView
+          ? `<button class="seat-pill seat-pill-test seat-preview-trigger" type="button" data-preview-player="${escapeHtml(player.id)}">Test Seat</button>`
+          : '<span class="seat-pill seat-pill-test">Test seat</span>'
         : '';
       const kickButton = isAdminView
         ? `<button class="seat-action" type="button" data-kick-player="${escapeHtml(player.id)}">Remove</button>`
@@ -316,15 +335,20 @@ function renderAssignments(assignments) {
     .join('');
 }
 
-function updateRoleCard(role) {
+function getScopedId(prefix, baseId) {
+  if (!prefix) return baseId;
+  return `${prefix}${baseId.charAt(0).toUpperCase()}${baseId.slice(1)}`;
+}
+
+function updateRoleCard(role, prefix = '') {
   const meta = ROLE_META[role] || ROLE_META.Villager;
-  const roleBack = $('roleCardBack');
-  const roleGlyph = $('roleGlyph');
-  const roleName = $('roleName');
-  const roleDesc = $('roleDesc');
-  const roleGlyphFront = $('roleGlyphFront');
-  const flipCard = $('roleCardFlip');
-  const toggleButton = $('toggleRoleBtn');
+  const roleBack = $(getScopedId(prefix, 'roleCardBack'));
+  const roleGlyph = $(getScopedId(prefix, 'roleGlyph'));
+  const roleName = $(getScopedId(prefix, 'roleName'));
+  const roleDesc = $(getScopedId(prefix, 'roleDesc'));
+  const roleGlyphFront = $(getScopedId(prefix, 'roleGlyphFront'));
+  const flipCard = $(getScopedId(prefix, 'roleCardFlip'));
+  const toggleButton = $(getScopedId(prefix, 'toggleRoleBtn'));
 
   if (!roleBack || !roleGlyph || !roleName || !roleDesc || !flipCard || !toggleButton) return;
 
@@ -337,9 +361,9 @@ function updateRoleCard(role) {
   toggleButton.textContent = 'Reveal Role';
 }
 
-function setRoleCardFlipped(forceValue) {
-  const flipCard = $('roleCardFlip');
-  const toggleButton = $('toggleRoleBtn');
+function setRoleCardFlipped(forceValue, prefix = '') {
+  const flipCard = $(getScopedId(prefix, 'roleCardFlip'));
+  const toggleButton = $(getScopedId(prefix, 'toggleRoleBtn'));
   if (!flipCard || !toggleButton) return;
 
   const nextValue = typeof forceValue === 'boolean' ? forceValue : !flipCard.classList.contains('flipped');
@@ -347,20 +371,111 @@ function setRoleCardFlipped(forceValue) {
   toggleButton.textContent = nextValue ? 'Hide Role' : 'Reveal Role';
 }
 
-function bindRoleControls() {
-  const flipCard = $('roleCardFlip');
-  const toggleButton = $('toggleRoleBtn');
+function bindRoleControls(prefix = '') {
+  const flipCard = $(getScopedId(prefix, 'roleCardFlip'));
+  const toggleButton = $(getScopedId(prefix, 'toggleRoleBtn'));
   if (!flipCard || !toggleButton || flipCard.dataset.bound === 'true') return;
 
   flipCard.dataset.bound = 'true';
 
   flipCard.addEventListener('click', () => {
-    setRoleCardFlipped();
+    setRoleCardFlipped(undefined, prefix);
   });
 
   toggleButton.addEventListener('click', () => {
-    setRoleCardFlipped();
+    setRoleCardFlipped(undefined, prefix);
   });
+}
+
+function setSeatPreviewStage(stage) {
+  const stages = {
+    waiting: $('seatPreviewWaitingStage'),
+    role: $('seatPreviewRoleStage'),
+    unavailable: $('seatPreviewUnavailableStage')
+  };
+
+  Object.entries(stages).forEach(([name, node]) => {
+    if (!node) return;
+    node.classList.toggle('hidden', name !== stage);
+  });
+}
+
+function renderSeatPreviewUnavailable(title, message) {
+  const overlay = $('seatPreviewOverlay');
+  if (!overlay) return;
+
+  overlay.classList.remove('hidden');
+  $('seatPreviewTitle').textContent = 'Test Seat Preview';
+  $('seatPreviewMessage').textContent = 'The selected mock seat is no longer available to inspect.';
+  $('seatPreviewUnavailableTitle').textContent = title;
+  $('seatPreviewUnavailableMessage').textContent = message;
+  setSeatPreviewStage('unavailable');
+}
+
+function closeSeatPreview() {
+  const overlay = $('seatPreviewOverlay');
+  state.previewPlayerId = null;
+  setRoleCardFlipped(false, 'seatPreview');
+  setSeatPreviewStage('waiting');
+  if (overlay) {
+    overlay.classList.add('hidden');
+  }
+}
+
+function syncSeatPreview() {
+  const overlay = $('seatPreviewOverlay');
+  if (!overlay || !state.previewPlayerId) return;
+
+  const lobby = state.currentLobby;
+  const player = findLobbyPlayer(state.previewPlayerId);
+
+  if (!lobby || !player || !player.isTestPlayer) {
+    renderSeatPreviewUnavailable(
+      'This test seat is no longer active.',
+      'Clear the overlay and choose another mock seat from the roster.'
+    );
+    return;
+  }
+
+  const connectedPlayers = typeof lobby.connectedPlayers === 'number'
+    ? lobby.connectedPlayers
+    : (lobby.players || []).filter((entry) => entry.connected).length;
+  const assignment = findAssignment(player.id);
+
+  overlay.classList.remove('hidden');
+  $('seatPreviewTitle').textContent = `Viewing ${player.name}`;
+  $('seatPreviewMessage').textContent = assignment && assignment.role
+    ? `This mirrors ${player.name}'s test role reveal exactly as a mock player would see it.`
+    : `This mirrors ${player.name}'s waiting-room view before the table is dealt roles.`;
+  $('seatPreviewPlayerName').textContent = player.name;
+  $('seatPreviewCode').textContent = lobby.code;
+  $('seatPreviewPlayerCountSummary').textContent = `${connectedPlayers} connected / ${lobby.playerCount} total`;
+  $('seatPreviewTableSummary').textContent = lobby.rolesAssigned
+    ? 'Roles are locked for this mock table.'
+    : connectedPlayers >= lobby.minimumPlayers
+      ? 'The table is ready. Waiting for the storyteller to deal roles.'
+      : `Waiting for ${Math.max(lobby.minimumPlayers - connectedPlayers, 0)} more connected player(s).`;
+  $('seatPreviewRoster').innerHTML = renderRoster(lobby.players || [], false);
+  setSignalPill(
+    $('seatPreviewStorytellerStatus'),
+    lobby.adminConnected ? 'Storyteller online' : 'Storyteller reconnecting',
+    !lobby.adminConnected
+  );
+
+  if (assignment && assignment.role) {
+    $('seatPreviewRoleTitle').textContent = `${player.name}'s role card`;
+    updateRoleCard(assignment.role, 'seatPreview');
+    setSeatPreviewStage('role');
+    return;
+  }
+
+  setRoleCardFlipped(false, 'seatPreview');
+  setSeatPreviewStage('waiting');
+}
+
+function openSeatPreview(playerId) {
+  state.previewPlayerId = playerId;
+  syncSeatPreview();
 }
 
 function setJoinStage(stage) {
@@ -411,10 +526,14 @@ function updateLobbyState(lobby) {
     );
 
     const assignButton = $('assignRolesBtn');
+    const clearTestGameButton = $('clearTestGameBtn');
     const resetButton = $('resetBtn');
     if (assignButton) {
       assignButton.disabled = lobby.rolesAssigned || connectedPlayers < lobby.minimumPlayers;
       assignButton.classList.toggle('hidden', lobby.rolesAssigned);
+    }
+    if (clearTestGameButton) {
+      clearTestGameButton.classList.toggle('hidden', !hasTestSeats(lobby));
     }
     if (resetButton) {
       resetButton.classList.toggle('hidden', !lobby.rolesAssigned);
@@ -444,6 +563,8 @@ function updateLobbyState(lobby) {
   if (roster) {
     roster.innerHTML = renderRoster(lobby.players || [], state.currentPage === 'lobby');
   }
+
+  syncSeatPreview();
 }
 
 function loadQrCode(code) {
@@ -581,11 +702,21 @@ function initLobbyPage() {
   const copyCodeBtn = $('copyCodeBtn');
   const copyUrlBtn = $('copyUrlBtn');
   const runTestGameButton = $('runTestGameBtn');
+  const clearTestGameButton = $('clearTestGameBtn');
   const assignButton = $('assignRolesBtn');
   const resetButton = $('resetBtn');
   const playerList = $('playerList');
+  const closeSeatPreviewButton = $('closeSeatPreviewBtn');
 
   state.requestedDemoMode = requestedDemo;
+  bindRoleControls('seatPreview');
+
+  if (closeSeatPreviewButton && closeSeatPreviewButton.dataset.bound !== 'true') {
+    closeSeatPreviewButton.dataset.bound = 'true';
+    closeSeatPreviewButton.addEventListener('click', () => {
+      closeSeatPreview();
+    });
+  }
 
   if (copyCodeBtn) {
     copyCodeBtn.addEventListener('click', () => copyText(state.currentLobbyCode, 'Lobby code copied.'));
@@ -630,6 +761,26 @@ function initLobbyPage() {
     });
   }
 
+  if (clearTestGameButton) {
+    clearTestGameButton.addEventListener('click', () => {
+      setButtonBusy(clearTestGameButton, true, 'Clearing...');
+      socket.emit('clear-test-game', { code: state.currentLobbyCode }, (data) => {
+        setButtonBusy(clearTestGameButton, false, 'Clear Test Game');
+        if (data.error) {
+          showToast(data.error, 'error');
+          return;
+        }
+
+        state.assignments = [];
+        renderAssignments([]);
+        if (data.lobby) {
+          updateLobbyState(data.lobby);
+        }
+        showToast('Test game cleared from the table.', 'info');
+      });
+    });
+  }
+
   if (assignButton) {
     assignButton.addEventListener('click', () => {
       setButtonBusy(assignButton, true, 'Assigning...');
@@ -669,6 +820,12 @@ function initLobbyPage() {
 
   if (playerList) {
     playerList.addEventListener('click', (event) => {
+      const previewButton = event.target.closest('[data-preview-player]');
+      if (previewButton) {
+        openSeatPreview(previewButton.getAttribute('data-preview-player'));
+        return;
+      }
+
       const actionButton = event.target.closest('[data-kick-player]');
       if (!actionButton) return;
       const playerId = actionButton.getAttribute('data-kick-player');
@@ -820,6 +977,10 @@ socket.on('lobby-state', (payload) => {
 
   if (eventType === 'test-game-ready' && state.currentPage === 'lobby') {
     showToast('Test game is ready to inspect.', 'success');
+  }
+
+  if (eventType === 'player-kicked' && state.currentPage === 'lobby' && state.previewPlayerId) {
+    syncSeatPreview();
   }
 });
 

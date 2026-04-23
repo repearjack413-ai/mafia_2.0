@@ -288,19 +288,35 @@ function createAppServer(options = {}) {
     return Array.from(lobby.players.values()).some((player) => !player.isTestPlayer);
   }
 
+  function hasTestPlayers(lobby) {
+    return Array.from(lobby.players.values()).some((player) => player.isTestPlayer);
+  }
+
+  function resetLobbyRoles(lobby) {
+    lobby.rolesAssigned = false;
+    lobby.roles = {};
+
+    for (const player of lobby.players.values()) {
+      player.role = null;
+    }
+  }
+
   function clearTestPlayers(lobby) {
+    let removedCount = 0;
     for (const [sessionId, player] of lobby.players.entries()) {
       if (player.isTestPlayer) {
         clearTimer(player.removeTimer);
         lobby.players.delete(sessionId);
+        removedCount += 1;
       }
     }
+
+    return removedCount;
   }
 
   function seedTestPlayers(lobby) {
     clearTestPlayers(lobby);
-    lobby.rolesAssigned = false;
-    lobby.roles = {};
+    resetLobbyRoles(lobby);
 
     const seededAt = Date.now();
     TEST_GAME_PLAYER_NAMES.forEach((name, index) => {
@@ -554,6 +570,31 @@ function createAppServer(options = {}) {
       });
     });
 
+    socket.on('clear-test-game', ({ code } = {}, callback = () => {}) => {
+      const normalizedCode = normalizeCode(code);
+      const lobby = lobbies.get(normalizedCode);
+
+      if (!lobby) return callback({ error: 'Lobby not found.' });
+      if (lobby.admin.socketId !== socket.id) {
+        return callback({ error: 'Only the storyteller can clear the test game.' });
+      }
+      if (!hasTestPlayers(lobby)) {
+        return callback({ error: 'No test game is active right now.' });
+      }
+
+      clearTestPlayers(lobby);
+      resetLobbyRoles(lobby);
+
+      const serializedLobby = serializeLobby(lobby);
+      io.to(lobby.code).emit('lobby-reset', { lobby: serializedLobby });
+      broadcastLobbyState(lobby.code, { type: 'test-game-cleared' });
+
+      return callback({
+        success: true,
+        lobby: serializedLobby
+      });
+    });
+
     socket.on('kick-player', ({ code, playerId } = {}, callback = () => {}) => {
       const normalizedCode = normalizeCode(code);
       const lobby = lobbies.get(normalizedCode);
@@ -579,11 +620,7 @@ function createAppServer(options = {}) {
         return callback({ error: 'Only the storyteller can reset the lobby.' });
       }
 
-      lobby.rolesAssigned = false;
-      lobby.roles = {};
-      for (const player of lobby.players.values()) {
-        player.role = null;
-      }
+      resetLobbyRoles(lobby);
 
       io.to(lobby.code).emit('lobby-reset', { lobby: serializeLobby(lobby) });
       broadcastLobbyState(lobby.code, { type: 'lobby-reset' });

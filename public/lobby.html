@@ -116,6 +116,9 @@
           <button class="btn btn-ghost btn-full" id="runTestGameBtn" type="button">
             Run Test Game
           </button>
+          <button class="btn btn-secondary btn-full hidden" id="clearTestGameBtn" type="button">
+            Clear Test Game
+          </button>
           <button class="btn btn-primary btn-full" id="assignRolesBtn" type="button" disabled>
             Assign Roles
           </button>
@@ -168,6 +171,91 @@
       </div>
     </section>
   </main>
+
+  <div class="overlay hidden" id="seatPreviewOverlay">
+    <div class="overlay-card luxury-panel seat-preview-card">
+      <div class="seat-preview-headline">
+        <div>
+          <p class="section-kicker">Test Seat Preview</p>
+          <h2 id="seatPreviewTitle">Viewing a mock seat</h2>
+          <p class="section-description" id="seatPreviewMessage">
+            This mirrors the selected mock player experience without creating a real player session.
+          </p>
+        </div>
+        <button class="btn btn-ghost" id="closeSeatPreviewBtn" type="button">Back to Storyteller</button>
+      </div>
+
+      <div class="table-summary-card seat-preview-summary">
+        <div>
+          <span class="summary-label">Seat</span>
+          <strong class="summary-value" id="seatPreviewPlayerName">Player</strong>
+        </div>
+        <div>
+          <span class="summary-label">Table code</span>
+          <strong class="summary-value" id="seatPreviewCode">------</strong>
+        </div>
+      </div>
+
+      <section class="seat-preview-stage" id="seatPreviewWaitingStage">
+        <div class="waiting-topline">
+          <div>
+            <p class="section-kicker">Waiting Room</p>
+            <h3>The mock table is assembling</h3>
+          </div>
+          <span class="signal-pill" id="seatPreviewStorytellerStatus">Storyteller online</span>
+        </div>
+
+        <div class="waiting-pulse" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+
+        <div class="roster-summary">
+          <span id="seatPreviewPlayerCountSummary">0 players connected</span>
+          <span id="seatPreviewTableSummary">Waiting for enough players to start</span>
+        </div>
+
+        <ul class="roster-list" id="seatPreviewRoster"></ul>
+      </section>
+
+      <section class="seat-preview-stage hidden" id="seatPreviewRoleStage">
+        <div class="role-stage-topline">
+          <div>
+            <p class="section-kicker">Private Reveal</p>
+            <h3 id="seatPreviewRoleTitle">Your role card</h3>
+          </div>
+          <span class="signal-pill signal-pill-accent">Secret information</span>
+        </div>
+
+        <div class="role-card-flip" id="seatPreviewRoleCardFlip">
+          <div class="role-card-inner">
+            <div class="role-card-front">
+              <div class="card-orbit" aria-hidden="true"></div>
+              <p class="card-overline">Tap to inspect</p>
+              <div class="card-glyph" id="seatPreviewRoleGlyphFront">?</div>
+              <p class="card-instruction">Keep this hidden from the rest of the room.</p>
+            </div>
+            <div class="role-card-back" id="seatPreviewRoleCardBack">
+              <div class="role-art" id="seatPreviewRoleGlyph"></div>
+              <h3 id="seatPreviewRoleName">Villager</h3>
+              <p id="seatPreviewRoleDesc">Work with the table to identify the killers.</p>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-secondary" id="seatPreviewToggleRoleBtn" type="button">Reveal Role</button>
+      </section>
+
+      <section class="seat-preview-stage hidden seat-preview-empty" id="seatPreviewUnavailableStage">
+        <p class="section-kicker">Seat unavailable</p>
+        <h3 id="seatPreviewUnavailableTitle">This test seat is no longer available.</h3>
+        <p class="section-description" id="seatPreviewUnavailableMessage">
+          Clear the overlay and choose another mock seat from the roster.
+        </p>
+      </section>
+    </div>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="/js/socket-client.js"></script>

@@ -320,6 +320,50 @@ async function testRunTestGameSeedsMockPlayersAndRejectsHumanMixing() {
   }
 }
 
+async function testClearTestGameRemovesMockSeatsAndPreservesHumanSeats() {
+  const { runtime, baseUrl } = await startTestServer();
+  const admin = await connectClient(baseUrl);
+  const humanPlayer = await connectClient(baseUrl);
+
+  try {
+    const created = await emitAck(admin, 'create-lobby', { adminSessionId: 'admin-clear-demo' });
+    assert.equal(created.success, true);
+
+    const seeded = await emitAck(admin, 'run-test-game', { code: created.code });
+    assert.equal(seeded.success, true);
+    assert.equal(seeded.lobby.playerCount, 6);
+
+    const reset = await emitAck(admin, 'reset-lobby', { code: created.code });
+    assert.equal(reset.success, true);
+
+    const joined = await emitAck(humanPlayer, 'join-lobby', {
+      code: created.code,
+      name: 'Nina',
+      playerSessionId: 'human-clear-demo'
+    });
+    assert.equal(joined.success, true);
+
+    const cleared = await emitAck(admin, 'clear-test-game', { code: created.code });
+    assert.equal(cleared.success, true);
+    assert.equal(cleared.lobby.playerCount, 1);
+    assert.equal(cleared.lobby.rolesAssigned, false);
+    assert.equal(cleared.lobby.players[0].name, 'Nina');
+    assert.equal(cleared.lobby.players[0].isTestPlayer, false);
+
+    const lobbyResponse = await fetch(`${baseUrl}/api/lobby/${created.code}`);
+    const lobbyBody = await lobbyResponse.json();
+    assert.equal(lobbyBody.playerCount, 1);
+    assert.equal(lobbyBody.players.every((player) => !player.isTestPlayer), true);
+
+    const denied = await emitAck(admin, 'clear-test-game', { code: created.code });
+    assert.match(denied.error, /no test game/i);
+  } finally {
+    humanPlayer.disconnect();
+    admin.disconnect();
+    await runtime.close();
+  }
+}
+
 async function main() {
   await runCase('QR URL uses the configured public app domain', testQrUrlUsesConfiguredPublicDomain);
   await runCase('complete multiplayer game flow assigns roles, blocks duplicate names, and resets cleanly', testCompleteMultiplayerGameFlow);
@@ -328,6 +372,7 @@ async function main() {
   await runCase('disconnected players are removed after the reconnect grace period', testDisconnectedPlayerIsRemovedAfterGracePeriod);
   await runCase('the lobby closes if the storyteller does not return before the grace period ends', testLobbyClosesWhenStorytellerDoesNotReturn);
   await runCase('run test game seeds mock players and refuses to mix with human players', testRunTestGameSeedsMockPlayersAndRejectsHumanMixing);
+  await runCase('clear test game removes mock seats and preserves any remaining human seats', testClearTestGameRemovesMockSeatsAndPreservesHumanSeats);
 
   if (process.exitCode) {
     process.exit(process.exitCode);
