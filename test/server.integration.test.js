@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 const { io: createClient } = require('socket.io-client');
 const { createAppServer } = require('../server');
 
+const VALID_ROLES = ['Storyteller', 'Killer', 'Police', 'Doctor', 'Villager'];
+
 async function startTestServer(overrides = {}) {
   const runtime = createAppServer({
     port: 0,
@@ -115,7 +117,7 @@ async function testCompleteMultiplayerGameFlow() {
     const deliveredRoles = await Promise.all(roleEvents);
     assert.equal(deliveredRoles.length, 4);
     deliveredRoles.forEach((payload) => {
-      assert.ok(['Killer', 'Doctor', 'Villager'].includes(payload.role));
+      assert.ok(VALID_ROLES.includes(payload.role));
     });
 
     const lateSocket = await connectClient(baseUrl);
@@ -298,7 +300,7 @@ async function testRunTestGameSeedsMockPlayersAndRejectsHumanMixing() {
     assert.equal(seeded.assignments.length, 6);
     seeded.assignments.forEach((assignment) => {
       assert.equal(assignment.isTestPlayer, true);
-      assert.ok(['Killer', 'Doctor', 'Villager'].includes(assignment.role));
+      assert.ok(VALID_ROLES.includes(assignment.role));
     });
 
     const reset = await emitAck(admin, 'reset-lobby', { code: created.code });
@@ -364,6 +366,66 @@ async function testClearTestGameRemovesMockSeatsAndPreservesHumanSeats() {
   }
 }
 
+async function testCustomRoleMixSupportsMultipleKillersPoliceAndStoryteller() {
+  const { runtime, baseUrl } = await startTestServer();
+  const admin = await connectClient(baseUrl);
+  const sockets = [];
+
+  try {
+    const created = await emitAck(admin, 'create-lobby', { adminSessionId: 'admin-role-mix' });
+    assert.equal(created.success, true);
+
+    for (const name of ['Ava', 'Noah', 'Mia', 'Luca', 'Iris', 'Theo']) {
+      const socket = await connectClient(baseUrl);
+      sockets.push(socket);
+      const joined = await emitAck(socket, 'join-lobby', {
+        code: created.code,
+        name,
+        playerSessionId: `mix-${name}`
+      });
+      assert.equal(joined.success, true);
+    }
+
+    const updated = await emitAck(admin, 'update-role-config', {
+      code: created.code,
+      roleConfig: {
+        storytellerCount: 1,
+        killerCount: 2,
+        policeCount: 1,
+        doctorCount: 1
+      }
+    });
+
+    assert.equal(updated.success, true);
+    assert.deepEqual(updated.lobby.roleConfig, {
+      storytellerCount: 1,
+      killerCount: 2,
+      policeCount: 1,
+      doctorCount: 1
+    });
+    assert.equal(updated.lobby.roleConfigCustomized, true);
+
+    const assigned = await emitAck(admin, 'assign-roles', { code: created.code });
+    assert.equal(assigned.success, true);
+    assert.equal(assigned.assignments.length, 6);
+
+    const counts = assigned.assignments.reduce((accumulator, assignment) => {
+      accumulator[assignment.role] = (accumulator[assignment.role] || 0) + 1;
+      return accumulator;
+    }, {});
+
+    assert.equal(counts.Storyteller, 1);
+    assert.equal(counts.Killer, 2);
+    assert.equal(counts.Police, 1);
+    assert.equal(counts.Doctor, 1);
+    assert.equal(counts.Villager, 1);
+  } finally {
+    sockets.forEach((socket) => socket.disconnect());
+    admin.disconnect();
+    await runtime.close();
+  }
+}
+
 async function main() {
   await runCase('QR URL uses the configured public app domain', testQrUrlUsesConfiguredPublicDomain);
   await runCase('complete multiplayer game flow assigns roles, blocks duplicate names, and resets cleanly', testCompleteMultiplayerGameFlow);
@@ -373,6 +435,7 @@ async function main() {
   await runCase('the lobby closes if the storyteller does not return before the grace period ends', testLobbyClosesWhenStorytellerDoesNotReturn);
   await runCase('run test game seeds mock players and refuses to mix with human players', testRunTestGameSeedsMockPlayersAndRejectsHumanMixing);
   await runCase('clear test game removes mock seats and preserves any remaining human seats', testClearTestGameRemovesMockSeatsAndPreservesHumanSeats);
+  await runCase('custom role mix supports multiple killers plus police and storyteller roles', testCustomRoleMixSupportsMultipleKillersPoliceAndStoryteller);
 
   if (process.exitCode) {
     process.exit(process.exitCode);

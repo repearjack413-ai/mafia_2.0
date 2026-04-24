@@ -112,6 +112,46 @@
           <li class="empty-roster">No players yet. Share the invite and fill the room.</li>
         </ul>
 
+        <section class="role-config-panel">
+          <div class="section-heading compact-heading">
+            <span class="section-icon">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 7h16"></path>
+                <path d="M7 12h10"></path>
+                <path d="M9 17h6"></path>
+              </svg>
+            </span>
+            <div>
+              <p class="section-kicker">Role Mix</p>
+              <h3>Customize the room</h3>
+            </div>
+          </div>
+
+          <div class="role-config-grid">
+            <label class="field role-config-field">
+              <span class="field-label">Storyteller</span>
+              <input id="storytellerCount" type="number" min="0" max="1" step="1" value="1">
+            </label>
+            <label class="field role-config-field">
+              <span class="field-label">Killers</span>
+              <input id="killerCount" type="number" min="0" max="12" step="1" value="1">
+            </label>
+            <label class="field role-config-field">
+              <span class="field-label">Police</span>
+              <input id="policeCount" type="number" min="0" max="12" step="1" value="0">
+            </label>
+            <label class="field role-config-field">
+              <span class="field-label">Doctors</span>
+              <input id="doctorCount" type="number" min="0" max="12" step="1" value="0">
+            </label>
+          </div>
+
+          <div class="role-config-meta">
+            <span id="roleConfigSummary">1 storyteller, 1 killer, 0 police, 0 doctors, 2 villagers</span>
+            <span id="roleConfigHint">Suggested mix adapts automatically until you edit it.</span>
+          </div>
+        </section>
+
         <div class="action-stack">
           <button class="btn btn-ghost btn-full" id="runTestGameBtn" type="button">
             Run Test Game

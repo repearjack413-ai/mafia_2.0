@@ -10,6 +10,7 @@ const DEFAULT_CODE_LENGTH = 6;
 const DEFAULT_MAX_PLAYERS = 12;
 const DEFAULT_PLAYER_GRACE_MS = 45000;
 const DEFAULT_ADMIN_GRACE_MS = 60000;
+const MINIMUM_PLAYERS = 4;
 const TEST_GAME_PLAYER_NAMES = ['Ava', 'Noah', 'Mila', 'Luca', 'Iris', 'Theo'];
 
 function generateCode(existingLobbies, length = DEFAULT_CODE_LENGTH) {
@@ -60,11 +61,62 @@ function serializePlayer(player) {
   };
 }
 
+function sanitizeRoleCount(value, maximum = DEFAULT_MAX_PLAYERS) {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return Math.min(parsed, maximum);
+}
+
+function getSuggestedRoleConfig(playerCount = MINIMUM_PLAYERS) {
+  const activeCount = Math.max(Number(playerCount) || 0, MINIMUM_PLAYERS);
+
+  return {
+    storytellerCount: 1,
+    killerCount: Math.max(1, Math.floor(activeCount / 4)),
+    policeCount: activeCount >= 5 ? 1 : 0,
+    doctorCount: activeCount >= 6 ? 1 : 0
+  };
+}
+
+function normalizeRoleConfig(roleConfig = {}, maximum = DEFAULT_MAX_PLAYERS) {
+  const suggested = getSuggestedRoleConfig();
+
+  return {
+    storytellerCount: sanitizeRoleCount(
+      roleConfig.storytellerCount ?? suggested.storytellerCount,
+      1
+    ),
+    killerCount: sanitizeRoleCount(roleConfig.killerCount ?? suggested.killerCount, maximum),
+    policeCount: sanitizeRoleCount(roleConfig.policeCount ?? suggested.policeCount, maximum),
+    doctorCount: sanitizeRoleCount(roleConfig.doctorCount ?? suggested.doctorCount, maximum)
+  };
+}
+
+function summarizeRoleConfig(roleConfig, playerCount) {
+  const normalized = normalizeRoleConfig(roleConfig, playerCount || DEFAULT_MAX_PLAYERS);
+  const specialRoleCount =
+    normalized.storytellerCount +
+    normalized.killerCount +
+    normalized.policeCount +
+    normalized.doctorCount;
+
+  return {
+    ...normalized,
+    specialRoleCount,
+    villagerCount: playerCount - specialRoleCount
+  };
+}
+
 function serializeLobby(lobby) {
   const players = Array.from(lobby.players.values())
     .sort((a, b) => a.joinedAt - b.joinedAt)
     .map(serializePlayer);
   const connectedPlayers = players.filter((player) => player.connected).length;
+  const roleConfig = lobby.roleConfigCustomized
+    ? normalizeRoleConfig(lobby.roleConfig, lobby.maxPlayers)
+    : getSuggestedRoleConfig(players.length);
 
   return {
     code: lobby.code,
@@ -72,22 +124,28 @@ function serializeLobby(lobby) {
     playerCount: players.length,
     connectedPlayers,
     rolesAssigned: lobby.rolesAssigned,
-    minimumPlayers: 4,
+    minimumPlayers: MINIMUM_PLAYERS,
     maxPlayers: lobby.maxPlayers,
-    adminConnected: Boolean(lobby.admin.connected)
+    adminConnected: Boolean(lobby.admin.connected),
+    roleConfig,
+    roleConfigCustomized: Boolean(lobby.roleConfigCustomized)
   };
 }
 
-function assignRoles(players) {
+function assignRoles(players, roleConfig = {}) {
   const count = players.length;
-  const numKillers = Math.max(1, Math.floor(count / 4));
-  const numDoctors = count >= 4 ? Math.max(1, Math.floor(count / 5)) : 0;
-  const numVillagers = count - numKillers - numDoctors;
+  const summary = summarizeRoleConfig(roleConfig, count);
+
+  if (summary.specialRoleCount > count) {
+    throw new Error('Role counts exceed the number of seated players.');
+  }
 
   const roles = [];
-  for (let i = 0; i < numKillers; i += 1) roles.push('Killer');
-  for (let i = 0; i < numDoctors; i += 1) roles.push('Doctor');
-  for (let i = 0; i < numVillagers; i += 1) roles.push('Villager');
+  for (let i = 0; i < summary.storytellerCount; i += 1) roles.push('Storyteller');
+  for (let i = 0; i < summary.killerCount; i += 1) roles.push('Killer');
+  for (let i = 0; i < summary.policeCount; i += 1) roles.push('Police');
+  for (let i = 0; i < summary.doctorCount; i += 1) roles.push('Doctor');
+  for (let i = 0; i < summary.villagerCount; i += 1) roles.push('Villager');
 
   for (let i = roles.length - 1; i > 0; i -= 1) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -111,6 +169,12 @@ function getAdminAssignments(lobby) {
 
 function getOrderedPlayers(lobby) {
   return Array.from(lobby.players.values()).sort((a, b) => a.joinedAt - b.joinedAt);
+}
+
+function getLobbyRoleConfig(lobby) {
+  return lobby.roleConfigCustomized
+    ? normalizeRoleConfig(lobby.roleConfig, lobby.maxPlayers)
+    : getSuggestedRoleConfig(lobby.players.size);
 }
 
 function createAppServer(options = {}) {
@@ -262,7 +326,7 @@ function createAppServer(options = {}) {
 
   function assignRolesInLobby(lobby) {
     const orderedPlayers = getOrderedPlayers(lobby);
-    const roles = assignRoles(orderedPlayers);
+    const roles = assignRoles(orderedPlayers, getLobbyRoleConfig(lobby));
 
     lobby.rolesAssigned = true;
     lobby.roles = {};
@@ -398,6 +462,8 @@ function createAppServer(options = {}) {
         maxPlayers: config.maxPlayers,
         rolesAssigned: false,
         roles: {},
+        roleConfig: getSuggestedRoleConfig(),
+        roleConfigCustomized: false,
         admin: {
           sessionId: adminSessionId,
           socketId: socket.id,
@@ -522,7 +588,26 @@ function createAppServer(options = {}) {
       });
     });
 
-    socket.on('assign-roles', ({ code } = {}, callback = () => {}) => {
+    socket.on('update-role-config', ({ code, roleConfig } = {}, callback = () => {}) => {
+      const normalizedCode = normalizeCode(code);
+      const lobby = lobbies.get(normalizedCode);
+
+      if (!lobby) return callback({ error: 'Lobby not found.' });
+      if (lobby.admin.socketId !== socket.id) {
+        return callback({ error: 'Only the storyteller can change the role mix.' });
+      }
+
+      lobby.roleConfig = normalizeRoleConfig(roleConfig, lobby.maxPlayers);
+      lobby.roleConfigCustomized = true;
+      broadcastLobbyState(lobby.code, { type: 'role-config-updated' });
+
+      return callback({
+        success: true,
+        lobby: serializeLobby(lobby)
+      });
+    });
+
+    socket.on('assign-roles', ({ code, roleConfig } = {}, callback = () => {}) => {
       const normalizedCode = normalizeCode(code);
       const lobby = lobbies.get(normalizedCode);
 
@@ -532,11 +617,26 @@ function createAppServer(options = {}) {
       }
 
       const connectedPlayers = Array.from(lobby.players.values()).filter((player) => player.connected);
-      if (connectedPlayers.length < 4) {
-        return callback({ error: 'Need at least 4 connected players to assign roles.' });
+      if (connectedPlayers.length < MINIMUM_PLAYERS) {
+        return callback({ error: `Need at least ${MINIMUM_PLAYERS} connected players to assign roles.` });
       }
 
-      const assignments = assignRolesInLobby(lobby);
+      if (roleConfig) {
+        lobby.roleConfig = normalizeRoleConfig(roleConfig, lobby.maxPlayers);
+        lobby.roleConfigCustomized = true;
+      }
+
+      const roleSummary = summarizeRoleConfig(getLobbyRoleConfig(lobby), lobby.players.size);
+      if (roleSummary.specialRoleCount > lobby.players.size) {
+        return callback({ error: 'Reduce special role counts or seat more players before assigning.' });
+      }
+
+      let assignments;
+      try {
+        assignments = assignRolesInLobby(lobby);
+      } catch (error) {
+        return callback({ error: error.message || 'Failed to assign roles.' });
+      }
 
       broadcastLobbyState(lobby.code, { type: 'roles-assigned' });
 
@@ -546,7 +646,7 @@ function createAppServer(options = {}) {
       });
     });
 
-    socket.on('run-test-game', ({ code } = {}, callback = () => {}) => {
+    socket.on('run-test-game', ({ code, roleConfig } = {}, callback = () => {}) => {
       const normalizedCode = normalizeCode(code);
       const lobby = lobbies.get(normalizedCode);
 
@@ -558,8 +658,18 @@ function createAppServer(options = {}) {
         return callback({ error: 'Remove real players before running the test game.' });
       }
 
+      if (roleConfig) {
+        lobby.roleConfig = normalizeRoleConfig(roleConfig, lobby.maxPlayers);
+        lobby.roleConfigCustomized = true;
+      }
+
       seedTestPlayers(lobby);
-      const assignments = assignRolesInLobby(lobby);
+      let assignments;
+      try {
+        assignments = assignRolesInLobby(lobby);
+      } catch (error) {
+        return callback({ error: error.message || 'Failed to prepare the test game.' });
+      }
 
       broadcastLobbyState(lobby.code, { type: 'test-game-ready' });
 

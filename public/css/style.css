@@ -1,24 +1,25 @@
 :root {
-  --bg: #09080d;
-  --bg-soft: #111019;
-  --panel: rgba(16, 20, 31, 0.84);
-  --panel-strong: rgba(11, 15, 24, 0.94);
-  --panel-border: rgba(225, 191, 120, 0.18);
-  --panel-border-strong: rgba(225, 191, 120, 0.3);
-  --panel-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
-  --gold: #dcb66d;
-  --gold-bright: #f7dfab;
-  --gold-faint: rgba(220, 182, 109, 0.16);
-  --text: #f6f1e8;
-  --text-muted: #b7af9b;
-  --text-soft: #7c7786;
-  --line: rgba(255, 255, 255, 0.08);
-  --danger: #c45a69;
+  --bg: #07060b;
+  --bg-soft: #121019;
+  --panel: rgba(18, 18, 29, 0.86);
+  --panel-strong: rgba(10, 11, 19, 0.96);
+  --panel-border: rgba(227, 191, 117, 0.16);
+  --panel-border-strong: rgba(227, 191, 117, 0.32);
+  --panel-shadow: 0 34px 84px rgba(0, 0, 0, 0.5);
+  --panel-shadow-soft: 0 20px 44px rgba(0, 0, 0, 0.28);
+  --gold: #c99443;
+  --gold-bright: #f4dfb1;
+  --gold-faint: rgba(201, 148, 67, 0.16);
+  --text: #f8f1e5;
+  --text-muted: #c8bca7;
+  --text-soft: #8d8493;
+  --line: rgba(255, 255, 255, 0.085);
+  --danger: #bd495d;
   --danger-soft: rgba(196, 90, 105, 0.18);
-  --success: #3ea67b;
+  --success: #45a881;
   --success-soft: rgba(62, 166, 123, 0.18);
-  --info: #5978c9;
-  --info-soft: rgba(89, 120, 201, 0.18);
+  --info: #6c86d7;
+  --info-soft: rgba(108, 134, 215, 0.18);
   --warning: #d79a4d;
   --warning-soft: rgba(215, 154, 77, 0.2);
   --radius-xs: 12px;
@@ -38,6 +39,7 @@
 
 html {
   scroll-behavior: smooth;
+  color-scheme: dark;
 }
 
 body {
@@ -46,10 +48,10 @@ body {
   font-family: var(--font-body);
   color: var(--text);
   background:
-    radial-gradient(circle at 0% 0%, rgba(153, 31, 53, 0.16), transparent 28%),
-    radial-gradient(circle at 100% 0%, rgba(189, 145, 56, 0.18), transparent 24%),
-    radial-gradient(circle at 50% 100%, rgba(40, 86, 139, 0.18), transparent 30%),
-    linear-gradient(180deg, #06060a 0%, #0b0c12 45%, #07080e 100%);
+    radial-gradient(circle at 12% 18%, rgba(153, 31, 53, 0.22), transparent 26%),
+    radial-gradient(circle at 88% 14%, rgba(201, 148, 67, 0.2), transparent 22%),
+    radial-gradient(circle at 76% 78%, rgba(108, 134, 215, 0.18), transparent 26%),
+    linear-gradient(145deg, #05060a 0%, #0d0b12 42%, #07080d 100%);
   overflow-x: hidden;
 }
 
@@ -95,29 +97,43 @@ svg {
 
 .site-bg {
   background:
-    radial-gradient(circle at 20% 20%, rgba(220, 182, 109, 0.1), transparent 18%),
-    radial-gradient(circle at 82% 16%, rgba(196, 90, 105, 0.09), transparent 20%),
-    radial-gradient(circle at 76% 82%, rgba(89, 120, 201, 0.08), transparent 18%);
-  filter: blur(8px);
+    radial-gradient(circle at 20% 20%, rgba(244, 223, 177, 0.1), transparent 18%),
+    radial-gradient(circle at 82% 16%, rgba(196, 90, 105, 0.11), transparent 20%),
+    radial-gradient(circle at 76% 82%, rgba(108, 134, 215, 0.1), transparent 18%);
+  filter: blur(10px);
+  animation: ambient-drift 18s ease-in-out infinite alternate;
 }
 
 .site-noise {
-  opacity: 0.14;
+  opacity: 0.12;
   background-image:
     linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 120px 120px;
+  background-size: 110px 110px;
   mask-image: radial-gradient(circle at center, black, transparent 88%);
 }
 
 .topbar {
   position: relative;
-  z-index: 2;
+  z-index: 6;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 18px;
-  padding: 28px 0 14px;
+  padding: 22px 0 16px;
+}
+
+.topbar::before {
+  content: '';
+  position: absolute;
+  inset: 6px -16px 0;
+  z-index: -1;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(17, 18, 28, 0.84), rgba(10, 11, 18, 0.58));
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
 }
 
 .topbar-actions {
@@ -136,14 +152,17 @@ svg {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
+  width: 56px;
+  height: 56px;
+  border-radius: 20px;
   background:
+    radial-gradient(circle at 30% 28%, rgba(255, 247, 225, 0.14), transparent 34%),
     linear-gradient(145deg, rgba(255, 240, 199, 0.12), rgba(225, 191, 120, 0.18)),
     linear-gradient(180deg, rgba(16, 20, 31, 0.95), rgba(11, 15, 24, 0.95));
   border: 1px solid var(--panel-border-strong);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 16px 30px rgba(0, 0, 0, 0.24);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 36px rgba(0, 0, 0, 0.26);
   color: var(--gold-bright);
   font-family: var(--font-display);
   font-size: 1.35rem;
@@ -172,13 +191,16 @@ svg {
 
 .luxury-panel {
   position: relative;
+  isolation: isolate;
   overflow: hidden;
   background:
-    linear-gradient(180deg, rgba(25, 30, 45, 0.88), rgba(9, 11, 18, 0.94)),
+    linear-gradient(180deg, rgba(18, 18, 30, 0.94), rgba(8, 10, 17, 0.97)),
     linear-gradient(120deg, rgba(255, 255, 255, 0.04), transparent 42%);
   border: 1px solid var(--panel-border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--panel-shadow);
+  box-shadow:
+    var(--panel-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(18px);
 }
 
@@ -188,8 +210,19 @@ svg {
   inset: 0;
   border-radius: inherit;
   background:
-    linear-gradient(140deg, rgba(247, 223, 171, 0.08), transparent 36%),
-    linear-gradient(320deg, rgba(196, 90, 105, 0.06), transparent 30%);
+    radial-gradient(circle at top right, rgba(244, 223, 177, 0.08), transparent 24%),
+    linear-gradient(140deg, rgba(244, 223, 177, 0.07), transparent 34%),
+    linear-gradient(320deg, rgba(196, 90, 105, 0.08), transparent 28%);
+  pointer-events: none;
+}
+
+.luxury-panel::after {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: calc(var(--radius-lg) - 1px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.06), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.03));
   pointer-events: none;
 }
 
@@ -270,11 +303,29 @@ svg {
   border: 1px solid transparent;
   font-size: 0.95rem;
   font-weight: 700;
-  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease, background 0.24s ease;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.24s ease, box-shadow 0.24s ease, border-color 0.24s ease, background 0.24s ease, color 0.24s ease;
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 1px;
+  border-radius: inherit;
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.14), transparent 32%, transparent 70%, rgba(255, 255, 255, 0.06));
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.24s ease;
 }
 
 .btn:hover {
   transform: translateY(-1px);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
+}
+
+.btn:hover::before {
+  opacity: 1;
 }
 
 .btn:disabled {
@@ -284,19 +335,19 @@ svg {
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--gold-bright), var(--gold));
+  background: linear-gradient(135deg, #f7e7bf, var(--gold));
   color: #100d09;
-  box-shadow: 0 16px 30px rgba(220, 182, 109, 0.25);
+  box-shadow: 0 18px 34px rgba(201, 148, 67, 0.28);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.04);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.025));
   color: var(--gold-bright);
   border-color: var(--panel-border-strong);
 }
 
 .btn-ghost {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.025);
   color: var(--text-muted);
   border-color: rgba(255, 255, 255, 0.08);
 }
@@ -325,7 +376,7 @@ svg {
 
 .signal-pill {
   border: 1px solid rgba(62, 166, 123, 0.35);
-  background: var(--success-soft);
+  background: linear-gradient(180deg, rgba(62, 166, 123, 0.24), rgba(62, 166, 123, 0.12));
   color: #a9f1d0;
 }
 
@@ -350,10 +401,23 @@ svg {
 }
 
 .hero-card {
-  padding: 34px;
+  padding: 40px;
   background:
-    linear-gradient(90deg, rgba(8, 8, 12, 0.92) 0%, rgba(8, 8, 12, 0.78) 46%, rgba(8, 8, 12, 0.9) 100%),
+    radial-gradient(circle at 88% 12%, rgba(201, 148, 67, 0.18), transparent 20%),
+    radial-gradient(circle at 16% 86%, rgba(189, 73, 93, 0.16), transparent 26%),
+    linear-gradient(100deg, rgba(8, 8, 12, 0.95) 0%, rgba(9, 10, 15, 0.78) 48%, rgba(8, 9, 14, 0.94) 100%),
     url('/assets/mafia-hero-noir.png') center/cover no-repeat;
+}
+
+.hero-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -8% -24% 46%;
+  height: 62%;
+  z-index: 0;
+  background: radial-gradient(circle, rgba(108, 134, 215, 0.18), transparent 60%);
+  filter: blur(36px);
+  animation: ambient-drift 16s ease-in-out infinite alternate;
 }
 
 .hero-layout {
@@ -367,8 +431,8 @@ svg {
 
 .hero-text {
   max-width: 58ch;
-  font-size: 1rem;
-  line-height: 1.75;
+  font-size: 1.03rem;
+  line-height: 1.85;
   margin: 20px 0 26px;
 }
 
@@ -394,9 +458,23 @@ svg {
 .table-summary-card {
   position: relative;
   z-index: 1;
-  background: rgba(255, 255, 255, 0.03);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.015));
   border: 1px solid rgba(255, 255, 255, 0.07);
   border-radius: var(--radius-sm);
+  box-shadow:
+    var(--panel-shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  transition: transform 0.28s ease, border-color 0.28s ease, background 0.28s ease;
+}
+
+.trust-chip:hover,
+.stage-card:hover,
+.metric-card:hover,
+.role-panel:hover,
+.seat-row:hover {
+  transform: translateY(-2px);
+  border-color: var(--panel-border);
 }
 
 .trust-chip {
@@ -405,6 +483,7 @@ svg {
   align-items: center;
   padding: 16px 18px;
   color: var(--text-muted);
+  backdrop-filter: blur(10px);
 }
 
 .trust-icon {
@@ -423,20 +502,22 @@ svg {
 
 .stage-card {
   padding: 22px;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  box-shadow:
+    var(--panel-shadow-soft),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .stage-card-main {
   min-height: 230px;
   background:
-    radial-gradient(circle at top right, rgba(220, 182, 109, 0.14), transparent 38%),
-    linear-gradient(180deg, rgba(25, 31, 47, 0.96), rgba(12, 15, 24, 0.98));
+    radial-gradient(circle at top right, rgba(201, 148, 67, 0.18), transparent 34%),
+    linear-gradient(180deg, rgba(30, 20, 26, 0.96), rgba(14, 16, 24, 0.98));
 }
 
 .stage-card-secondary {
   background:
-    radial-gradient(circle at left bottom, rgba(196, 90, 105, 0.12), transparent 34%),
-    linear-gradient(180deg, rgba(18, 22, 34, 0.96), rgba(11, 14, 23, 0.96));
+    radial-gradient(circle at left bottom, rgba(196, 90, 105, 0.16), transparent 32%),
+    linear-gradient(180deg, rgba(18, 19, 33, 0.96), rgba(11, 14, 23, 0.96));
 }
 
 .stage-label,
@@ -510,48 +591,121 @@ svg {
 .roles-showcase {
   margin-top: 24px;
   padding: 30px;
+  background:
+    radial-gradient(circle at top right, rgba(201, 148, 67, 0.12), transparent 24%),
+    linear-gradient(180deg, rgba(18, 18, 29, 0.96), rgba(8, 10, 17, 0.98));
 }
 
 .role-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 18px;
 }
 
 .role-panel {
-  padding: 22px;
+  padding: 26px;
+  min-height: 100%;
+  overflow: hidden;
+}
+
+.role-panel::before {
+  content: '';
+  position: absolute;
+  inset: -24% 36% 30% -10%;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1), transparent 70%);
+  opacity: 0.7;
+}
+
+.role-panel::after {
+  content: '';
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
 }
 
 .role-glyph {
   display: grid;
   place-items: center;
-  width: 54px;
-  height: 54px;
-  margin-bottom: 18px;
-  border-radius: 16px;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 20px;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 18px 32px rgba(0, 0, 0, 0.26);
+}
+
+.role-glyph svg {
+  width: 38px;
+  height: 38px;
+  stroke-width: 1.6;
 }
 
 .role-panel h3 {
   margin: 0 0 10px;
   font-family: var(--font-display);
+  font-size: 1.45rem;
 }
 
-.role-panel-killer .role-glyph,
-.role-theme-killer {
-  background: var(--danger-soft);
-  color: #f3bbc3;
+.role-panel-storyteller {
+  background:
+    radial-gradient(circle at top right, rgba(201, 148, 67, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(39, 26, 18, 0.95), rgba(20, 14, 11, 0.98));
 }
 
-.role-panel-doctor .role-glyph,
-.role-theme-doctor {
-  background: var(--success-soft);
-  color: #b9f0d9;
+.role-panel-killer {
+  background:
+    radial-gradient(circle at top right, rgba(189, 73, 93, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(37, 15, 22, 0.95), rgba(20, 11, 17, 0.98));
 }
 
-.role-panel-villager .role-glyph,
-.role-theme-villager {
-  background: var(--info-soft);
-  color: #c5d5ff;
+.role-panel-police {
+  background:
+    radial-gradient(circle at top right, rgba(108, 134, 215, 0.2), transparent 34%),
+    linear-gradient(180deg, rgba(17, 31, 58, 0.95), rgba(11, 19, 32, 0.98));
+}
+
+.role-panel-doctor {
+  background:
+    radial-gradient(circle at top right, rgba(69, 168, 129, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(15, 34, 28, 0.94), rgba(10, 18, 15, 0.98));
+}
+
+.role-panel-villager {
+  background:
+    radial-gradient(circle at top right, rgba(108, 134, 215, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(17, 26, 45, 0.95), rgba(10, 15, 27, 0.98));
+}
+
+.role-panel-storyteller .role-glyph {
+  background: linear-gradient(180deg, rgba(201, 148, 67, 0.24), rgba(97, 59, 20, 0.46));
+  color: #f8e5b9;
+}
+
+.role-panel-killer .role-glyph {
+  background: linear-gradient(180deg, rgba(189, 73, 93, 0.24), rgba(80, 25, 37, 0.46));
+  color: #f4bcc7;
+}
+
+.role-panel-police .role-glyph {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.24), rgba(29, 48, 100, 0.46));
+  color: #d8e2ff;
+}
+
+.role-panel-doctor .role-glyph {
+  background: linear-gradient(180deg, rgba(69, 168, 129, 0.24), rgba(23, 76, 58, 0.46));
+  color: #c4f2df;
+}
+
+.role-panel-villager .role-glyph {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.24), rgba(39, 54, 102, 0.48));
+  color: #cfdaff;
 }
 
 .join-shell {
@@ -601,16 +755,25 @@ svg {
   padding: 0 18px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.09);
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
   color: var(--text);
   transition: border-color 0.24s ease, box-shadow 0.24s ease, background 0.24s ease;
+}
+
+.field input[type="number"] {
+  appearance: textfield;
+}
+
+.field input[type="number"]::-webkit-outer-spin-button,
+.field input[type="number"]::-webkit-inner-spin-button {
+  margin: 0;
 }
 
 .field input:focus {
   outline: none;
   border-color: var(--panel-border-strong);
-  box-shadow: 0 0 0 4px rgba(220, 182, 109, 0.08);
-  background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 4px rgba(201, 148, 67, 0.1);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 #lobbyCode {
@@ -648,6 +811,9 @@ svg {
   gap: 18px;
   padding: 20px;
   margin: 24px 0;
+  background:
+    radial-gradient(circle at top right, rgba(244, 223, 177, 0.08), transparent 26%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
 }
 
 .waiting-pulse {
@@ -692,6 +858,50 @@ svg {
   gap: 12px;
 }
 
+.role-config-panel {
+  margin-top: 18px;
+  padding: 22px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top right, rgba(244, 223, 177, 0.08), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 36px rgba(0, 0, 0, 0.16);
+}
+
+.role-config-panel h3 {
+  margin: 8px 0 0;
+  font-family: var(--font-display);
+}
+
+.role-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.role-config-field input {
+  min-height: 52px;
+  text-align: center;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.role-config-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.role-config-warning {
+  color: #ffd8aa;
+}
+
 .seat-row {
   display: flex;
   justify-content: space-between;
@@ -699,8 +909,13 @@ svg {
   align-items: center;
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 26px rgba(0, 0, 0, 0.14);
+  transition: transform 0.28s ease, border-color 0.28s ease, background 0.28s ease;
 }
 
 .seat-main,
@@ -717,7 +932,9 @@ svg {
   width: 42px;
   height: 42px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(220, 182, 109, 0.2), rgba(247, 223, 171, 0.08));
+  background:
+    radial-gradient(circle at 28% 28%, rgba(255, 247, 225, 0.12), transparent 34%),
+    linear-gradient(135deg, rgba(201, 148, 67, 0.22), rgba(244, 223, 177, 0.08));
   color: var(--gold-bright);
   font-weight: 800;
 }
@@ -750,6 +967,7 @@ svg {
 .seat-preview-trigger {
   cursor: pointer;
   font: inherit;
+  transition: transform 0.24s ease, background 0.24s ease;
 }
 
 .seat-preview-trigger:hover,
@@ -809,22 +1027,22 @@ svg {
 .role-card-back {
   position: absolute;
   inset: 0;
-  padding: 24px;
-  border-radius: 28px;
+  padding: 26px;
+  border-radius: 30px;
   backface-visibility: hidden;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 14px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 26px 60px rgba(0, 0, 0, 0.38);
 }
 
 .role-card-front {
-  border: 1px solid rgba(225, 191, 120, 0.28);
+  border: 1px solid rgba(227, 191, 117, 0.28);
   background:
-    radial-gradient(circle at 50% 15%, rgba(247, 223, 171, 0.16), transparent 30%),
-    linear-gradient(160deg, rgba(20, 24, 38, 0.98), rgba(10, 13, 21, 0.98));
+    radial-gradient(circle at 50% 15%, rgba(244, 223, 177, 0.18), transparent 28%),
+    linear-gradient(160deg, rgba(28, 19, 33, 0.98), rgba(11, 13, 22, 0.98));
 }
 
 .role-card-back {
@@ -843,20 +1061,20 @@ svg {
 .card-glyph {
   display: grid;
   place-items: center;
-  width: 110px;
-  height: 110px;
+  width: 118px;
+  height: 118px;
   border-radius: 50%;
-  font-size: 3.3rem;
+  font-size: 3.45rem;
   font-family: var(--font-display);
   color: var(--gold-bright);
-  background: radial-gradient(circle, rgba(247, 223, 171, 0.14), transparent 70%);
+  background: radial-gradient(circle, rgba(244, 223, 177, 0.14), transparent 70%);
 }
 
 .card-orbit {
   position: absolute;
-  inset: 30px;
+  inset: 24px;
   border-radius: 999px;
-  border: 1px solid rgba(225, 191, 120, 0.14);
+  border: 1px solid rgba(227, 191, 117, 0.16);
   animation: orbit 6s linear infinite;
 }
 
@@ -869,15 +1087,78 @@ svg {
 .role-art {
   display: grid;
   place-items: center;
-  width: 88px;
-  height: 88px;
-  border-radius: 24px;
+  width: 94px;
+  height: 94px;
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .role-art svg {
-  width: 48px;
-  height: 48px;
+  width: 50px;
+  height: 50px;
+  stroke-width: 1.6;
+}
+
+.role-card-back.role-theme-storyteller {
+  background:
+    radial-gradient(circle at top, rgba(201, 148, 67, 0.24), transparent 28%),
+    linear-gradient(160deg, rgba(53, 33, 16, 0.98), rgba(24, 16, 10, 0.98));
+  border-color: rgba(201, 148, 67, 0.3);
+}
+
+.role-card-back.role-theme-killer {
+  background:
+    radial-gradient(circle at top, rgba(189, 73, 93, 0.24), transparent 28%),
+    linear-gradient(160deg, rgba(44, 14, 23, 0.98), rgba(19, 10, 16, 0.98));
+  border-color: rgba(189, 73, 93, 0.28);
+}
+
+.role-card-back.role-theme-police {
+  background:
+    radial-gradient(circle at top, rgba(108, 134, 215, 0.24), transparent 28%),
+    linear-gradient(160deg, rgba(13, 29, 58, 0.98), rgba(10, 16, 28, 0.98));
+  border-color: rgba(108, 134, 215, 0.3);
+}
+
+.role-card-back.role-theme-doctor {
+  background:
+    radial-gradient(circle at top, rgba(69, 168, 129, 0.24), transparent 28%),
+    linear-gradient(160deg, rgba(14, 42, 33, 0.98), rgba(8, 19, 16, 0.98));
+  border-color: rgba(69, 168, 129, 0.28);
+}
+
+.role-card-back.role-theme-villager {
+  background:
+    radial-gradient(circle at top, rgba(108, 134, 215, 0.22), transparent 28%),
+    linear-gradient(160deg, rgba(16, 31, 54, 0.98), rgba(10, 17, 29, 0.98));
+  border-color: rgba(108, 134, 215, 0.3);
+}
+
+.role-card-back.role-theme-storyteller .role-art {
+  background: linear-gradient(180deg, rgba(201, 148, 67, 0.22), rgba(97, 59, 20, 0.42));
+  color: #f8e5b9;
+}
+
+.role-card-back.role-theme-killer .role-art {
+  background: linear-gradient(180deg, rgba(189, 73, 93, 0.22), rgba(80, 25, 37, 0.42));
+  color: #f4bcc7;
+}
+
+.role-card-back.role-theme-police .role-art {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.22), rgba(29, 48, 100, 0.42));
+  color: #d8e2ff;
+}
+
+.role-card-back.role-theme-doctor .role-art {
+  background: linear-gradient(180deg, rgba(69, 168, 129, 0.22), rgba(23, 76, 58, 0.4));
+  color: #c4f2df;
+}
+
+.role-card-back.role-theme-villager .role-art {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.22), rgba(39, 54, 102, 0.42));
+  color: #cfdaff;
 }
 
 .role-card-back h3 {
@@ -917,9 +1198,10 @@ svg {
   margin: 20px 0 16px;
   border-radius: 28px;
   background:
-    radial-gradient(circle at top, rgba(247, 223, 171, 0.08), transparent 44%),
-    rgba(255, 255, 255, 0.03);
+    radial-gradient(circle at top, rgba(244, 223, 177, 0.1), transparent 44%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .qr-frame img {
@@ -938,7 +1220,7 @@ svg {
 .join-link {
   padding: 14px 16px;
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.03);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02));
   border: 1px solid rgba(255, 255, 255, 0.06);
   overflow-wrap: anywhere;
 }
@@ -965,16 +1247,39 @@ svg {
   border: 1px solid transparent;
 }
 
-.role-theme-killer.summary-chip {
-  border-color: rgba(196, 90, 105, 0.26);
+.role-tag.role-theme-storyteller,
+.summary-chip.role-theme-storyteller {
+  background: linear-gradient(180deg, rgba(201, 148, 67, 0.24), rgba(97, 59, 20, 0.3));
+  color: #f8e5b9;
+  border-color: rgba(201, 148, 67, 0.28);
 }
 
-.role-theme-doctor.summary-chip {
-  border-color: rgba(62, 166, 123, 0.26);
+.role-tag.role-theme-killer,
+.summary-chip.role-theme-killer {
+  background: linear-gradient(180deg, rgba(189, 73, 93, 0.24), rgba(80, 25, 37, 0.28));
+  color: #f4bcc7;
+  border-color: rgba(196, 90, 105, 0.28);
 }
 
-.role-theme-villager.summary-chip {
-  border-color: rgba(89, 120, 201, 0.26);
+.role-tag.role-theme-police,
+.summary-chip.role-theme-police {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.24), rgba(29, 48, 100, 0.3));
+  color: #d8e2ff;
+  border-color: rgba(108, 134, 215, 0.28);
+}
+
+.role-tag.role-theme-doctor,
+.summary-chip.role-theme-doctor {
+  background: linear-gradient(180deg, rgba(69, 168, 129, 0.24), rgba(23, 76, 58, 0.28));
+  color: #c4f2df;
+  border-color: rgba(69, 168, 129, 0.28);
+}
+
+.role-tag.role-theme-villager,
+.summary-chip.role-theme-villager {
+  background: linear-gradient(180deg, rgba(108, 134, 215, 0.24), rgba(39, 54, 102, 0.3));
+  color: #cfdaff;
+  border-color: rgba(108, 134, 215, 0.28);
 }
 
 .table-wrap {
@@ -990,6 +1295,14 @@ svg {
 .roles-table td {
   padding: 14px 12px;
   text-align: left;
+}
+
+.roles-table tbody tr {
+  transition: background 0.24s ease;
+}
+
+.roles-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .roles-table th {
@@ -1144,6 +1457,15 @@ svg {
   }
 }
 
+@keyframes ambient-drift {
+  0% {
+    transform: translate3d(-1.5%, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(1.5%, -2%, 0) scale(1.04);
+  }
+}
+
 @media (max-width: 1024px) {
   .hero-layout,
   .lobby-grid,
@@ -1188,6 +1510,10 @@ svg {
   }
 
   .table-summary-card {
+    grid-template-columns: 1fr;
+  }
+
+  .role-config-grid {
     grid-template-columns: 1fr;
   }
 

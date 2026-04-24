@@ -1,14 +1,28 @@
 const socket = io();
 
 const ROLE_META = {
+  Storyteller: {
+    title: 'Storyteller',
+    description: 'Guide the pace from inside the room, spark discussion, and keep everyone reading each other.',
+    className: 'role-theme-storyteller',
+    glyph: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M6 7.5A2.5 2.5 0 0 1 8.5 5H18v12H8.5A2.5 2.5 0 0 0 6 19.5z"></path>
+        <path d="M6 7.5v12"></path>
+        <path d="M10 9.5h5"></path>
+        <path d="M10 13h4"></path>
+      </svg>
+    `
+  },
   Killer: {
     title: 'Killer',
     description: 'Direct suspicion elsewhere and remove villagers before the room identifies you.',
     className: 'role-theme-killer',
     glyph: `
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M14 4l6 6-9 9-6 1 1-6 8-8z"></path>
-        <path d="M13 5l6 6"></path>
+        <path d="M12 3l7 4v4c0 5-2.9 8.3-7 10-4.1-1.7-7-5-7-10V7l7-4z"></path>
+        <path d="M9.5 10.5c.8-1 1.6-1.5 2.5-1.5s1.7.5 2.5 1.5"></path>
+        <path d="M10 14c.8.5 1.4.8 2 .8s1.2-.3 2-.8"></path>
       </svg>
     `
   },
@@ -18,9 +32,22 @@ const ROLE_META = {
     className: 'role-theme-doctor',
     glyph: `
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M12 5v14"></path>
-        <path d="M5 12h14"></path>
-        <path d="M7 3h10v18H7z"></path>
+        <path d="M9 6V4.5h6V6"></path>
+        <path d="M5 8.5h14v9A2.5 2.5 0 0 1 16.5 20h-9A2.5 2.5 0 0 1 5 17.5z"></path>
+        <path d="M12 10.5v5"></path>
+        <path d="M9.5 13h5"></path>
+      </svg>
+    `
+  },
+  Police: {
+    title: 'Police',
+    description: 'Investigate the table carefully, pressure contradictions, and expose hidden threats before the room turns.',
+    className: 'role-theme-police',
+    glyph: `
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M12 3l7 3.5v4.5c0 5-3 8.5-7 10-4-1.5-7-5-7-10V6.5z"></path>
+        <path d="M12 8v6"></path>
+        <path d="M9 11h6"></path>
       </svg>
     `
   },
@@ -30,9 +57,12 @@ const ROLE_META = {
     className: 'role-theme-villager',
     glyph: `
       <svg viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M4 18h16"></path>
-        <path d="M6 18V9l6-4 6 4v9"></path>
-        <path d="M10 18v-4h4v4"></path>
+        <path d="M4 9.5L12 5l8 4.5"></path>
+        <path d="M6 10.5v7"></path>
+        <path d="M10 10.5v7"></path>
+        <path d="M14 10.5v7"></path>
+        <path d="M18 10.5v7"></path>
+        <path d="M3 18.5h18"></path>
       </svg>
     `
   }
@@ -54,7 +84,8 @@ const state = {
   assignments: [],
   hasConnectedOnce: false,
   requestedDemoMode: false,
-  previewPlayerId: null
+  previewPlayerId: null,
+  roleConfigSyncTimer: null
 };
 
 function $(id) {
@@ -215,6 +246,105 @@ function findLobbyPlayer(playerId) {
 
 function findAssignment(playerId) {
   return state.assignments.find((assignment) => assignment.id === playerId) || null;
+}
+
+function getRoleConfigInputIds() {
+  return ['storytellerCount', 'killerCount', 'policeCount', 'doctorCount'];
+}
+
+function sanitizeRoleCount(value, maximum = 12) {
+  const parsed = Number.parseInt(value, 10);
+  if (Number.isNaN(parsed) || parsed < 0) {
+    return 0;
+  }
+  return Math.min(parsed, maximum);
+}
+
+function readRoleConfigForm() {
+  return {
+    storytellerCount: sanitizeRoleCount($('storytellerCount')?.value, 1),
+    killerCount: sanitizeRoleCount($('killerCount')?.value),
+    policeCount: sanitizeRoleCount($('policeCount')?.value),
+    doctorCount: sanitizeRoleCount($('doctorCount')?.value)
+  };
+}
+
+function getRoleMixSummary(roleConfig, playerCount) {
+  const storytellerCount = sanitizeRoleCount(roleConfig?.storytellerCount, 1);
+  const killerCount = sanitizeRoleCount(roleConfig?.killerCount);
+  const policeCount = sanitizeRoleCount(roleConfig?.policeCount);
+  const doctorCount = sanitizeRoleCount(roleConfig?.doctorCount);
+  const specialRoleCount = storytellerCount + killerCount + policeCount + doctorCount;
+
+  return {
+    storytellerCount,
+    killerCount,
+    policeCount,
+    doctorCount,
+    specialRoleCount,
+    villagerCount: playerCount - specialRoleCount
+  };
+}
+
+function renderRoleConfigurator(lobby) {
+  const summaryLabel = $('roleConfigSummary');
+  const hintLabel = $('roleConfigHint');
+  if (!summaryLabel || !hintLabel || !lobby || !lobby.roleConfig) return;
+
+  const inputIds = getRoleConfigInputIds();
+  inputIds.forEach((id) => {
+    const input = $(id);
+    if (!input) return;
+    const nextValue = String(lobby.roleConfig[id]);
+    if (input.value !== nextValue) {
+      input.value = nextValue;
+    }
+  });
+
+  const displaySeatCount = lobby.roleConfigCustomized
+    ? lobby.playerCount
+    : Math.max(lobby.playerCount, lobby.minimumPlayers);
+  const summary = getRoleMixSummary(lobby.roleConfig, displaySeatCount);
+
+  summaryLabel.textContent =
+    `${summary.storytellerCount} storyteller, ${summary.killerCount} killer${summary.killerCount === 1 ? '' : 's'}, ` +
+    `${summary.policeCount} police, ${summary.doctorCount} doctor${summary.doctorCount === 1 ? '' : 's'}, ` +
+    `${Math.max(summary.villagerCount, 0)} villager${Math.max(summary.villagerCount, 0) === 1 ? '' : 's'}`;
+
+  if (lobby.playerCount < lobby.minimumPlayers) {
+    hintLabel.textContent = `Suggested mix shown for ${lobby.minimumPlayers} seats. Add ${Math.max(lobby.minimumPlayers - lobby.connectedPlayers, 0)} more connected player(s) to start.`;
+    hintLabel.classList.remove('role-config-warning');
+    return;
+  }
+
+  const liveSummary = getRoleMixSummary(lobby.roleConfig, lobby.playerCount);
+  if (liveSummary.villagerCount < 0) {
+    hintLabel.textContent = `This mix needs ${Math.abs(liveSummary.villagerCount)} more seated player(s), or fewer special roles.`;
+    hintLabel.classList.add('role-config-warning');
+    return;
+  }
+
+  hintLabel.textContent = lobby.roleConfigCustomized
+    ? `Villagers fill the remaining ${liveSummary.villagerCount} seat(s).`
+    : `Suggested mix adapts automatically until you edit it. ${liveSummary.villagerCount} villager seat(s) will auto-fill.`;
+  hintLabel.classList.toggle('role-config-warning', false);
+}
+
+function syncRoleConfigFromForm() {
+  if (!state.currentLobbyCode) return;
+
+  socket.emit(
+    'update-role-config',
+    {
+      code: state.currentLobbyCode,
+      roleConfig: readRoleConfigForm()
+    },
+    (data) => {
+      if (data && data.error) {
+        showToast(data.error, 'error');
+      }
+    }
+  );
 }
 
 function renderResumeButton() {
@@ -513,11 +643,14 @@ function updateLobbyState(lobby) {
       $('tableStateLabel').textContent = lobby.rolesAssigned ? 'Roles assigned' : 'Open for seating';
     }
     if ($('rosterHint')) {
+      const roleSummary = getRoleMixSummary(lobby.roleConfig || {}, lobby.playerCount);
       $('rosterHint').textContent = lobby.rolesAssigned
         ? 'Players can reconnect to their assigned roles.'
-        : connectedPlayers >= lobby.minimumPlayers
-          ? 'Table is ready for role assignment.'
-          : `Need ${lobby.minimumPlayers} connected players to assign roles.`;
+        : connectedPlayers < lobby.minimumPlayers
+          ? `Need ${lobby.minimumPlayers} connected players to assign roles.`
+        : roleSummary.villagerCount < 0
+          ? `Reduce special roles or seat ${Math.abs(roleSummary.villagerCount)} more player(s) before assigning.`
+        : 'Table is ready for role assignment.';
     }
     setSignalPill(
       $('hostStatusPill'),
@@ -528,8 +661,12 @@ function updateLobbyState(lobby) {
     const assignButton = $('assignRolesBtn');
     const clearTestGameButton = $('clearTestGameBtn');
     const resetButton = $('resetBtn');
+    const roleSummary = getRoleMixSummary(lobby.roleConfig || {}, lobby.playerCount);
     if (assignButton) {
-      assignButton.disabled = lobby.rolesAssigned || connectedPlayers < lobby.minimumPlayers;
+      assignButton.disabled =
+        lobby.rolesAssigned ||
+        connectedPlayers < lobby.minimumPlayers ||
+        roleSummary.villagerCount < 0;
       assignButton.classList.toggle('hidden', lobby.rolesAssigned);
     }
     if (clearTestGameButton) {
@@ -538,6 +675,8 @@ function updateLobbyState(lobby) {
     if (resetButton) {
       resetButton.classList.toggle('hidden', !lobby.rolesAssigned);
     }
+
+    renderRoleConfigurator(lobby);
   }
 
   if (state.currentPage === 'join') {
@@ -707,6 +846,9 @@ function initLobbyPage() {
   const resetButton = $('resetBtn');
   const playerList = $('playerList');
   const closeSeatPreviewButton = $('closeSeatPreviewBtn');
+  const roleConfigInputs = getRoleConfigInputIds()
+    .map((id) => $(id))
+    .filter(Boolean);
 
   state.requestedDemoMode = requestedDemo;
   bindRoleControls('seatPreview');
@@ -726,12 +868,30 @@ function initLobbyPage() {
     copyUrlBtn.addEventListener('click', () => copyText(state.joinUrl, 'Invite link copied.'));
   }
 
+  if (roleConfigInputs.length) {
+    roleConfigInputs.forEach((input) => {
+      if (input.dataset.bound === 'true') return;
+      input.dataset.bound = 'true';
+      input.addEventListener('input', () => {
+        if (state.roleConfigSyncTimer) {
+          clearTimeout(state.roleConfigSyncTimer);
+        }
+        state.roleConfigSyncTimer = setTimeout(() => {
+          syncRoleConfigFromForm();
+        }, 180);
+      });
+    });
+  }
+
   function runTestGame({ suppressToast = false } = {}) {
     if (runTestGameButton) {
       setButtonBusy(runTestGameButton, true, 'Loading Demo...');
     }
 
-    socket.emit('run-test-game', { code: state.currentLobbyCode }, (data) => {
+    socket.emit('run-test-game', {
+      code: state.currentLobbyCode,
+      roleConfig: readRoleConfigForm()
+    }, (data) => {
       if (runTestGameButton) {
         setButtonBusy(runTestGameButton, false, 'Run Test Game');
       }
@@ -784,7 +944,10 @@ function initLobbyPage() {
   if (assignButton) {
     assignButton.addEventListener('click', () => {
       setButtonBusy(assignButton, true, 'Assigning...');
-      socket.emit('assign-roles', { code: state.currentLobbyCode }, (data) => {
+      socket.emit('assign-roles', {
+        code: state.currentLobbyCode,
+        roleConfig: readRoleConfigForm()
+      }, (data) => {
         setButtonBusy(assignButton, false, 'Assign Roles');
         if (data.error) {
           showToast(data.error, 'error');
